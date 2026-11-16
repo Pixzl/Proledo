@@ -11,10 +11,10 @@
 
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="docs/menu-dark.png">
-    <img src="docs/menu-light.png" width="400" alt="The Proledo menu with a map of four displays and a video library">
+    <source media="(prefers-color-scheme: dark)" srcset="docs/menu-dark-0.8.png">
+    <img src="docs/menu-light-0.8.png" width="400" alt="The Proledo menu with a map of four displays and a video library">
   </picture>
-  <img src="docs/generator.png" width="400" alt="Creating a contour line wallpaper in Proledo">
+  <img src="docs/generator-0.8.png" width="400" alt="Creating a contour line wallpaper in Proledo">
 </p>
 
 Made for the MacBook Pro with PROLED XDR display, works on any Mac and any external monitor. Proledo lives in your menu bar. Paste a YouTube link, the video gets saved locally and plays as your desktop background. Every monitor can have its own video, or none at all.
