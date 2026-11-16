@@ -102,7 +102,7 @@ final class AppState: ObservableObject {
         let url: URL
     }
 
-    static let repositoryURL = URL(string: "https://github.com/drieken/Proledo")!
+    static let repositoryURL = URL(string: "https://github.com/Pixzl/Proledo")!
     @Published private(set) var update: UpdateInfo?
     private var updateTimer: Timer?
 
@@ -117,7 +117,7 @@ final class AppState: ObservableObject {
 
     func checkForUpdates() async {
         guard let current = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String,
-              let api = URL(string: "https://api.github.com/repos/drieken/Proledo/releases/latest"),
+              let api = URL(string: "https://api.github.com/repos/Pixzl/Proledo/releases/latest"),
               let (data, _) = try? await URLSession.shared.data(from: api),
               let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
               let tag = json["tag_name"] as? String,

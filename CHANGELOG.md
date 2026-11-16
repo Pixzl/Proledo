@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.8.1 – November 16, 2026
+
+- Proledo now lives at github.com/Pixzl/Proledo. Links and update checks point there.
+
 ## 0.8 – November 16, 2026
 
 - A calmer, more Mac-like menu: plain sections instead of boxes, standard switches and buttons, fewer hints.

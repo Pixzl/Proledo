@@ -6,7 +6,7 @@
 
 <p align="center">
   Moving wallpapers for Macs with a PROLED or OLED display, so nothing burns in.<br>
-  <a href="https://github.com/drieken/Proledo/releases/latest"><b>Download the latest release</b></a>
+  <a href="https://github.com/Pixzl/Proledo/releases/latest"><b>Download the latest release</b></a>
 </p>
 
 <p align="center">
@@ -42,7 +42,7 @@ Proledo can draw wallpapers for you: white contour lines slowly flowing over bla
 
 ## Install
 
-Grab `Proledo.zip` from the [latest release](https://github.com/drieken/Proledo/releases/latest), unzip it and move Proledo to your Applications folder.
+Grab `Proledo.zip` from the [latest release](https://github.com/Pixzl/Proledo/releases/latest), unzip it and move Proledo to your Applications folder.
 
 The app isn't notarized yet, so macOS blocks it on first launch. Right-click it and choose **Open**, or run:
 
