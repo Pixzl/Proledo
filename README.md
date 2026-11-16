@@ -11,6 +11,7 @@ Made for the MacBook Pro with PROLED XDR display, works on any Mac and any exter
 - Lets you choose a video per monitor, portrait screens included
 - Hides the menu bar and Dock per monitor, they come back when your mouse hits the edge
 - Pauses on its own when the desktop is covered, the Mac is locked or running on battery
+- Has a power saving mode that plays a lighter 30 fps copy of each video
 - Never keeps your screen awake
 - Works with your own video files too
 

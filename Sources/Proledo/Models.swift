@@ -9,8 +9,12 @@ struct VideoItem: Codable, Identifiable, Hashable {
     var addedAt: Date
     var duration: Double?
     var fileSize: Int64?
+    var ecoFileName: String?
+    var ecoFileSize: Int64?
 
     var fileURL: URL { Storage.videosDir.appendingPathComponent(fileName) }
+    var ecoURL: URL? { ecoFileName.map { Storage.videosDir.appendingPathComponent($0) } }
+    var hasSeparateEco: Bool { ecoFileName != nil && ecoFileName != fileName }
     var thumbnailURL: URL { Storage.videosDir.appendingPathComponent("\(id.uuidString).jpg") }
 }
 
@@ -32,6 +36,7 @@ struct Settings: Codable, Equatable {
     var screenOptions: [String: ScreenOptions] = [:]
     var pauseOnBattery = true
     var userPaused = false
+    var powerSaving = false
 
     init() {}
 
@@ -41,6 +46,7 @@ struct Settings: Codable, Equatable {
         screenOptions = try c.decodeIfPresent([String: ScreenOptions].self, forKey: .screenOptions) ?? [:]
         pauseOnBattery = try c.decodeIfPresent(Bool.self, forKey: .pauseOnBattery) ?? true
         userPaused = try c.decodeIfPresent(Bool.self, forKey: .userPaused) ?? false
+        powerSaving = try c.decodeIfPresent(Bool.self, forKey: .powerSaving) ?? false
     }
 }
 

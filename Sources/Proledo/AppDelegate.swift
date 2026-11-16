@@ -66,6 +66,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                                  action: #selector(quickTogglePause), keyEquivalent: "")
         pause.target = self
         menu.addItem(.separator())
+        let saving = menu.addItem(withTitle: "Stromsparmodus", action: #selector(quickTogglePowerSaving), keyEquivalent: "")
+        saving.target = self
+        saving.state = state.settings.powerSaving ? .on : .off
         let login = menu.addItem(withTitle: "Beim Anmelden starten", action: #selector(quickToggleLogin), keyEquivalent: "")
         login.target = self
         login.state = state.launchAtLogin ? .on : .off
@@ -77,6 +80,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     @objc private func quickTogglePause() { state.togglePause() }
+    @objc private func quickTogglePowerSaving() { state.settings.powerSaving.toggle() }
     @objc private func quickToggleLogin() { state.setLaunchAtLogin(!state.launchAtLogin) }
     @objc private func quickOpenFolder() { state.revealInFinder() }
 
@@ -86,14 +90,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     static func statusImage(playing: Bool) -> NSImage {
-        let image = NSImage(size: NSSize(width: 18, height: 18), flipped: false) { rect in
+        let image = NSImage(size: NSSize(width: 18, height: 18), flipped: false) { _ in
             NSColor.black.set()
-            let ring = NSBezierPath(ovalIn: rect.insetBy(dx: 2.75, dy: 2.75))
-            ring.lineWidth = 2
-            ring.stroke()
-            if playing {
-                NSBezierPath(ovalIn: NSRect(x: rect.midX - 2.25, y: rect.midY - 2.25, width: 4.5, height: 4.5)).fill()
-            }
+            let frame = NSBezierPath(roundedRect: NSRect(x: 1.75, y: 5.75, width: 14.5, height: 10.5), xRadius: 2.5, yRadius: 2.5)
+            frame.lineWidth = 1.5
+            frame.stroke()
+            let stand = NSBezierPath()
+            stand.move(to: NSPoint(x: 6, y: 2))
+            stand.line(to: NSPoint(x: 12, y: 2))
+            stand.move(to: NSPoint(x: 9, y: 2))
+            stand.line(to: NSPoint(x: 9, y: 5))
+            stand.lineWidth = 1.5
+            stand.lineCapStyle = .round
+            stand.stroke()
+            let wave = NSBezierPath()
+            wave.move(to: NSPoint(x: 4.75, y: 10.25))
+            wave.curve(to: NSPoint(x: 9, y: 11), controlPoint1: NSPoint(x: 6.25, y: 13.25), controlPoint2: NSPoint(x: 7.5, y: 13.25))
+            wave.curve(to: NSPoint(x: 13.25, y: 11.75), controlPoint1: NSPoint(x: 10.5, y: 8.75), controlPoint2: NSPoint(x: 11.75, y: 8.75))
+            wave.lineWidth = 1.5
+            wave.lineCapStyle = .round
+            NSColor.black.withAlphaComponent(playing ? 1 : 0.4).set()
+            wave.stroke()
             return true
         }
         image.isTemplate = true

@@ -44,7 +44,7 @@ final class Downloader {
         return env
     }
 
-    func fetchInfo(urlString: String) async throws -> VideoInfo {
+    func fetchInfo(urlString: String, preferLowFrameRate: Bool = false) async throws -> VideoInfo {
         guard let tool = Self.findYtDlp() else {
             throw UserError(message: "yt-dlp nicht gefunden. Installieren mit: brew install yt-dlp")
         }
@@ -94,7 +94,7 @@ final class Downloader {
             channel: (json["channel"] ?? json["uploader"]) as? String,
             duration: duration,
             thumbnail: (json["thumbnail"] as? String).flatMap(URL.init(string:)),
-            qualities: Self.qualities(from: formats, duration: duration)
+            qualities: Self.qualities(from: formats, duration: duration, preferLowFrameRate: preferLowFrameRate)
         )
     }
 
@@ -102,7 +102,7 @@ final class Downloader {
         if let infoProcess, infoProcess.isRunning { infoProcess.terminate() }
     }
 
-    static func qualities(from formats: [[String: Any]], duration: Double?) -> [QualityOption] {
+    static func qualities(from formats: [[String: Any]], duration: Double?, preferLowFrameRate: Bool = false) -> [QualityOption] {
         let av1 = VTIsHardwareDecodeSupported(kCMVideoCodecType_AV1)
 
         struct Candidate {
@@ -142,9 +142,17 @@ final class Downloader {
         for c in candidates {
             guard let t = tier(c.short) else { continue }
             if let current = best[t.rank]?.candidate {
+                let cFps = c.fps ?? 0, curFps = current.fps ?? 0
+                let higher = (cFps, c.tbr) > (curFps, current.tbr)
+                let fpsBetter: Bool
+                if preferLowFrameRate && (cFps <= 30) != (curFps <= 30) {
+                    fpsBetter = cFps <= 30
+                } else {
+                    fpsBetter = higher
+                }
                 let better =
                     (c.codec == "AV1" && current.codec != "AV1") ||
-                    (c.codec == current.codec && ((c.fps ?? 0), c.tbr) > ((current.fps ?? 0), current.tbr))
+                    (c.codec == current.codec && fpsBetter)
                 if !better { continue }
             }
             best[t.rank] = (t.label, c)

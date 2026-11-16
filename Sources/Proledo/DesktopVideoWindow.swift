@@ -15,6 +15,7 @@ final class DesktopVideoWindow: NSWindow {
     private(set) var videoURL: URL?
 
     var onVisibilityChange: (() -> Void)?
+    var onPlayerChange: (() -> Void)?
 
     init(screen: NSScreen) {
         super.init(contentRect: screen.frame, styleMask: [.borderless], backing: .buffered, defer: false)
@@ -47,13 +48,17 @@ final class DesktopVideoWindow: NSWindow {
     var isVisibleOnScreen: Bool { occlusionState.contains(.visible) }
 
     func show(videoURL url: URL) {
-        guard url != videoURL, let root = contentView?.layer else { return }
+        guard url != videoURL else { return }
         videoURL = url
+        startPlayback(with: AVPlayerItem(url: url))
+    }
 
+    private func startPlayback(with item: AVPlayerItem) {
+        guard let root = contentView?.layer else { return }
         let player = AVQueuePlayer()
         player.isMuted = true
         player.preventsDisplaySleepDuringVideoPlayback = false
-        let looper = AVPlayerLooper(player: player, templateItem: AVPlayerItem(url: url))
+        let looper = AVPlayerLooper(player: player, templateItem: item)
 
         let layer = AVPlayerLayer(player: player)
         layer.frame = root.bounds
@@ -65,6 +70,7 @@ final class DesktopVideoWindow: NSWindow {
         let previous = current
         current = Playback(player: player, looper: looper, layer: layer)
         if wantsPlaying { player.play() }
+        onPlayerChange?()
 
         readyObservation = layer.observe(\.isReadyForDisplay, options: [.initial, .new]) { [weak self] observed, _ in
             guard observed.isReadyForDisplay else { return }

@@ -8,6 +8,7 @@ final class WallpaperEngine {
     private var playbackAllowed = true
 
     var screensWithStrips: Set<String> = []
+    var onPlayersChanged: (() -> Void)?
 
     func player(for screenID: String) -> AVPlayer? {
         windows[screenID]?.currentPlayer
@@ -61,6 +62,7 @@ final class WallpaperEngine {
     private func makeWindow(id: String, screen: NSScreen) -> DesktopVideoWindow {
         let window = DesktopVideoWindow(screen: screen)
         window.onVisibilityChange = { [weak self] in self?.updatePlayback() }
+        window.onPlayerChange = { [weak self] in self?.onPlayersChanged?() }
         windows[id] = window
         return window
     }

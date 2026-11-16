@@ -19,6 +19,7 @@ final class AppState: ObservableObject {
     @Published private(set) var screens: [ScreenInfo] = []
     @Published private(set) var pauseReason: String?
     @Published var phase: AddPhase = .idle
+    @Published private(set) var convertingID: UUID?
     @Published var draft = DownloadDraft()
     @Published private(set) var downloadStartedAt = Date()
     @Published private(set) var downloadIsClip = false
@@ -28,6 +29,7 @@ final class AppState: ObservableObject {
             guard settings != oldValue else { return }
             Storage.save(settings, to: Storage.settingsFile)
             applyAll()
+            processEcoQueue()
         }
     }
 
@@ -48,6 +50,7 @@ final class AppState: ObservableObject {
 
     func start() {
         power.onChange = { [weak self] in self?.applyAll() }
+        engine.onPlayersChanged = { [weak self] in self?.applyBars() }
         power.start()
 
         NotificationCenter.default.addObserver(
@@ -61,6 +64,7 @@ final class AppState: ObservableObject {
 
         refreshScreens()
         applyAll()
+        processEcoQueue()
     }
 
     func stop() {
@@ -153,12 +157,17 @@ final class AppState: ObservableObject {
         var desired: [String: URL] = [:]
         for (screenID, videoID) in settings.assignments {
             if let item = library.first(where: { $0.id == videoID }) {
-                desired[screenID] = item.fileURL
+                let eco = settings.powerSaving ? item.ecoURL : nil
+                desired[screenID] = eco ?? item.fileURL
             }
         }
         pauseReason = currentPauseReason()
         engine.screensWithStrips = Set(settings.screenOptions.filter { $0.value.hideMenuBar || $0.value.hideDock }.keys)
         engine.apply(desired: desired, playbackAllowed: pauseReason == nil)
+        applyBars()
+    }
+
+    private func applyBars() {
         bars.apply(options: settings.screenOptions) { [weak self] id in self?.engine.player(for: id) }
     }
 
@@ -172,9 +181,9 @@ final class AppState: ObservableObject {
         infoTask = Task { [weak self] in
             guard let self else { return }
             do {
-                let info = try await self.downloader.fetchInfo(urlString: text)
+                let info = try await self.downloader.fetchInfo(urlString: text, preferLowFrameRate: self.settings.powerSaving)
                 guard self.phase == .loadingInfo else { return }
-                self.draft = Self.defaultDraft(for: info)
+                self.draft = self.defaultDraft(for: info)
                 self.phase = .ready(info)
             } catch is CancellationError {
             } catch {
@@ -183,9 +192,11 @@ final class AppState: ObservableObject {
         }
     }
 
-    private static func defaultDraft(for info: VideoInfo) -> DownloadDraft {
+    private func defaultDraft(for info: VideoInfo) -> DownloadDraft {
         var draft = DownloadDraft()
-        draft.qualityID = info.qualities.first?.id
+        draft.qualityID = settings.powerSaving
+            ? (info.qualities.first { $0.label != "4K" } ?? info.qualities.first)?.id
+            : info.qualities.first?.id
         let duration = info.duration ?? 0
         if duration > 20 * 60 {
             draft.useRange = true
@@ -305,6 +316,7 @@ final class AppState: ObservableObject {
         library.append(item)
         Storage.save(library, to: Storage.libraryFile)
         phase = .idle
+        processEcoQueue()
 
         if settings.assignments.isEmpty, let target = screens.first(where: \.isBuiltIn) ?? screens.first {
             assign(item.id, to: target.id)
@@ -324,7 +336,44 @@ final class AppState: ObservableObject {
         return NSImage(cgImage: cgImage, size: NSSize(width: cgImage.width, height: cgImage.height))
     }
 
-    var librarySize: Int64 { library.compactMap(\.fileSize).reduce(0, +) }
+    var librarySize: Int64 {
+        library.reduce(0) { $0 + ($1.fileSize ?? 0) + ($1.hasSeparateEco ? ($1.ecoFileSize ?? 0) : 0) }
+    }
+
+    private var ecoTask: Task<Void, Never>?
+    private var ecoFailed: Set<UUID> = []
+
+    func processEcoQueue() {
+        guard settings.powerSaving, ecoTask == nil,
+              let item = library.first(where: { $0.ecoFileName == nil && !ecoFailed.contains($0.id) })
+        else { return }
+        convertingID = item.id
+        let target = Storage.videosDir.appendingPathComponent("\(item.id.uuidString)-eco.mp4")
+        ecoTask = Task { [weak self] in
+            let result = await EcoConverter.convert(source: item.fileURL, to: target)
+            guard let self else { return }
+            self.ecoTask = nil
+            self.convertingID = nil
+            guard let index = self.library.firstIndex(where: { $0.id == item.id }) else {
+                try? FileManager.default.removeItem(at: target)
+                self.processEcoQueue()
+                return
+            }
+            switch result {
+            case .converted(let url):
+                self.library[index].ecoFileName = url.lastPathComponent
+                self.library[index].ecoFileSize =
+                    (try? FileManager.default.attributesOfItem(atPath: url.path)[.size] as? NSNumber)?.int64Value
+            case .notNeeded:
+                self.library[index].ecoFileName = item.fileName
+            case .failed:
+                self.ecoFailed.insert(item.id)
+            }
+            Storage.save(self.library, to: Storage.libraryFile)
+            self.applyAll()
+            self.processEcoQueue()
+        }
+    }
 
     func delete(_ item: VideoItem) {
         library.removeAll { $0.id == item.id }
@@ -336,6 +385,7 @@ final class AppState: ObservableObject {
         applyAll()
         try? FileManager.default.removeItem(at: item.fileURL)
         try? FileManager.default.removeItem(at: item.thumbnailURL)
+        if item.hasSeparateEco, let eco = item.ecoURL { try? FileManager.default.removeItem(at: eco) }
     }
 
     func revealInFinder(_ item: VideoItem? = nil) {

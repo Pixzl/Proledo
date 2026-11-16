@@ -576,7 +576,16 @@ private struct LibraryRow: View {
             Thumb(image: state.thumbnails[item.id])
             VStack(alignment: .leading, spacing: 2) {
                 Text(item.title).font(.callout).lineLimit(1).truncationMode(.middle)
-                Text(details).font(.caption2.monospacedDigit()).foregroundStyle(.secondary)
+                if state.convertingID == item.id {
+                    HStack(spacing: 4) {
+                        ProgressView().controlSize(.mini)
+                        Text("Sparsame Version wird erstellt…")
+                    }
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                } else {
+                    Text(details).font(.caption2.monospacedDigit()).foregroundStyle(.secondary)
+                }
             }
             Spacer(minLength: 4)
             if hovering {
@@ -613,6 +622,7 @@ private struct LibraryRow: View {
         if let d = item.duration { parts.append(Format.duration(d)) }
         if let s = item.fileSize { parts.append(Format.bytes(s)) }
         parts.append(item.sourceURL == nil ? "Datei" : "YouTube")
+        if state.settings.powerSaving && item.ecoFileName != nil { parts.append("sparsam") }
         return parts.joined(separator: " · ")
     }
 }
@@ -633,6 +643,8 @@ private struct FooterView: View {
             VStack(alignment: .leading, spacing: 4) {
                 Toggle("Beim Anmelden starten", isOn: loginBinding)
                 Toggle("Im Akkubetrieb pausieren", isOn: $state.settings.pauseOnBattery)
+                Toggle("Stromsparmodus (30 fps, max. 1440p)", isOn: $state.settings.powerSaving)
+                    .help("Erstellt von jedem Video einmalig eine sparsame Kopie und spielt diese ab. Das Original bleibt erhalten.")
             }
             .toggleStyle(.checkbox)
             .font(.caption)

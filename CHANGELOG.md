@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3 – November 16, 2026
+
+- New power saving mode: Proledo makes a lighter copy of each video (30 fps, up to 1440p) and plays that instead. Your Mac does noticeably less work, and the original stays untouched.
+- With power saving on, new downloads default to 1440p.
+- The menu bar icon is now a little screen instead of something that looked like a record button.
+
 ## 0.2 – November 16, 2026
 
 - The app is now called Proledo and has a new, simpler icon.
