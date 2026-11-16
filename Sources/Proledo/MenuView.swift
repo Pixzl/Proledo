@@ -566,6 +566,9 @@ private struct LibraryRow: View {
     @EnvironmentObject private var state: AppState
     let item: VideoItem
     @State private var hovering = false
+    @State private var editing = false
+    @State private var draftTitle = ""
+    @FocusState private var titleFocused: Bool
 
     private var usedOn: Int {
         state.screens.filter { state.assignment(for: $0.id) == item.id }.count
@@ -575,7 +578,24 @@ private struct LibraryRow: View {
         HStack(spacing: 10) {
             Thumb(image: state.thumbnails[item.id])
             VStack(alignment: .leading, spacing: 2) {
-                Text(item.title).font(.callout).lineLimit(1).truncationMode(.middle)
+                if editing {
+                    TextField("Name", text: $draftTitle)
+                        .textFieldStyle(.roundedBorder)
+                        .font(.callout)
+                        .focused($titleFocused)
+                        .onSubmit(commitRename)
+                        .onExitCommand { editing = false }
+                        .onChange(of: titleFocused) { _, focused in
+                            if !focused && editing { commitRename() }
+                        }
+                } else {
+                    Text(item.title)
+                        .font(.callout)
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+                        .help("Doppelklick zum Umbenennen")
+                        .onTapGesture(count: 2, perform: startRename)
+                }
                 if state.convertingID == item.id {
                     HStack(spacing: 4) {
                         ProgressView().controlSize(.mini)
@@ -588,14 +608,23 @@ private struct LibraryRow: View {
                 }
             }
             Spacer(minLength: 4)
-            if hovering {
-                Button {
-                    state.delete(item)
-                } label: {
-                    Image(systemName: "trash").foregroundStyle(.secondary)
+            if editing {
+                EmptyView()
+            } else if hovering {
+                HStack(spacing: 8) {
+                    Button(action: startRename) {
+                        Image(systemName: "pencil").foregroundStyle(.secondary)
+                    }
+                    .buttonStyle(.borderless)
+                    .help("Umbenennen")
+                    Button {
+                        state.delete(item)
+                    } label: {
+                        Image(systemName: "trash").foregroundStyle(.secondary)
+                    }
+                    .buttonStyle(.borderless)
+                    .help("Video löschen")
                 }
-                .buttonStyle(.borderless)
-                .help("Video löschen")
             } else if usedOn > 0 {
                 Image(systemName: "checkmark.circle.fill")
                     .foregroundStyle(.green)
@@ -612,9 +641,21 @@ private struct LibraryRow: View {
                 Button("Auf \(screen.name) zeigen") { state.assign(item.id, to: screen.id) }
             }
             Divider()
+            Button("Umbenennen…", action: startRename)
             Button("Im Finder zeigen") { state.revealInFinder(item) }
             Button("Löschen", role: .destructive) { state.delete(item) }
         }
+    }
+
+    private func startRename() {
+        draftTitle = item.title
+        editing = true
+        DispatchQueue.main.async { titleFocused = true }
+    }
+
+    private func commitRename() {
+        state.rename(item.id, to: draftTitle)
+        editing = false
     }
 
     private var details: String {

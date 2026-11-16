@@ -375,6 +375,14 @@ final class AppState: ObservableObject {
         }
     }
 
+    func rename(_ id: UUID, to title: String) {
+        let trimmed = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty, let index = library.firstIndex(where: { $0.id == id }),
+              library[index].title != trimmed else { return }
+        library[index].title = trimmed
+        Storage.save(library, to: Storage.libraryFile)
+    }
+
     func delete(_ item: VideoItem) {
         library.removeAll { $0.id == item.id }
         thumbnails[item.id] = nil

@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.4 – November 16, 2026
+
+- You can rename videos now. Double-click a name in the library, use the pencil icon or right-click and pick Rename.
+
 ## 0.3 – November 16, 2026
 
 - New power saving mode: Proledo makes a lighter copy of each video (30 fps, up to 1440p) and plays that instead. Your Mac does noticeably less work, and the original stays untouched.
