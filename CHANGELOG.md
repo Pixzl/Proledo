@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.6 – November 16, 2026
+
+- Deleting a video now moves it to the Trash under its own name, so nothing is gone for good by accident.
+- You can add several video files at once.
+- A short welcome guide shows up while your library is still empty.
+- Picking a video for a display shows little previews and a checkmark next to the current one.
+- Creating a wallpaper keeps going in the background if you close it, and the progress shows at the top of the menu.
+
 ## 0.5 – November 16, 2026
 
 - Proledo can now make wallpapers on its own: flowing contour lines on black, made to fit the exact shape of the display you pick, portrait screens included. Choose how dense, how fast and how bold, hit Create, done.

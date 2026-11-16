@@ -34,6 +34,12 @@
 "Unbenanntes Video" = "Vidéo sans titre";
 "yt-dlp konnte nicht gestartet werden: %@" = "Impossible de lancer yt-dlp : %@";
 "Download fehlgeschlagen (Code %d)." = "Le téléchargement a échoué (code %d).";
+"Willkommen" = "Bienvenue";
+"Proledo hält dein OLED-Display in Bewegung, damit sich nichts einbrennt." = "Proledo garde ton écran OLED en mouvement pour que rien ne marque.";
+"Füge unten ein Video hinzu: per YouTube-Link, als eigene Datei oder selbst erzeugt." = "Ajoute une vidéo ci-dessous : lien YouTube, ton propre fichier ou créée ici.";
+"Wähle unter „Monitore“, wo es laufen soll." = "Choisis où elle s'affiche dans « Écrans ».";
+"Blende bei Bedarf Menüleiste und Dock aus." = "Masque la barre des menus et le Dock si tu veux.";
+"Hintergrund wird erzeugt · %d %%" = "Création du fond · %d %%";
 "Kein Video aktiv" = "Aucune vidéo active";
 "Läuft auf 1 Monitor" = "Lecture sur 1 écran";
 "Läuft auf %d Monitoren" = "Lecture sur %d écrans";
@@ -48,6 +54,7 @@
 "Video-Infos werden geladen…" = "Chargement des infos de la vidéo…";
 "yt-dlp fehlt. Installieren mit: brew install yt-dlp" = "yt-dlp est manquant. Installe-le avec : brew install yt-dlp";
 "Eigene Videodatei wählen…" = "Choisir un fichier vidéo…";
+"Wird erzeugt · %d %%" = "Création · %d %%";
 "Hintergrund erzeugen…" = "Créer un fond…";
 "Download abbrechen" = "Annuler le téléchargement";
 "%@ von ≈ %@" = "%@ sur ≈ %@";
@@ -63,6 +70,7 @@
 "Ziemlich groß. Ein kürzerer Ausschnitt oder eine kleinere Qualität spart Platz." = "C'est assez lourd. Un extrait plus court ou une qualité plus basse prend moins de place.";
 "Laden" = "Télécharger";
 "Hintergrund erzeugen" = "Créer un fond";
+"Im Hintergrund weiterrechnen" = "Continuer en arrière-plan";
 "Schließen" = "Fermer";
 "Neues Muster" = "Nouveau motif";
 "Monitor" = "Écran";
@@ -77,7 +85,6 @@
 "Monitore" = "Écrans";
 "Alle aus" = "Tout désactiver";
 "Für alle" = "Tous les écrans";
-"Füge oben ein Video hinzu, dann kannst du es hier jedem Monitor zuordnen." = "Ajoute une vidéo ci-dessus, puis attribue-la ici à chaque écran.";
 "Ausgeblendete Leisten kommen zurück, sobald die Maus an den Rand fährt." = "Les barres masquées réapparaissent dès que le pointeur touche le bord.";
 "Aus" = "Désactivé";
 "Menüleiste" = "Barre des menus";
@@ -90,12 +97,11 @@
 "Doppelklick zum Umbenennen" = "Double-clic pour renommer";
 "Sparsame Version wird erstellt…" = "Création d'une version allégée…";
 "Umbenennen" = "Renommer";
-"Video löschen" = "Supprimer la vidéo";
+"In den Papierkorb legen" = "Placer dans la corbeille";
 "Auf allen Monitoren zeigen" = "Afficher sur tous les écrans";
 "Auf %@ zeigen" = "Afficher sur %@";
 "Umbenennen…" = "Renommer…";
 "Im Finder zeigen" = "Afficher dans le Finder";
-"Löschen" = "Supprimer";
 "Erzeugt" = "Généré";
 "Datei" = "Fichier";
 "sparsam" = "éco";

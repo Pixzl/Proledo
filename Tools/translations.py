@@ -139,6 +139,27 @@ T = {
     "Lebhaft": ("Lively", "Vif", "Animado"),
     "Fein": ("Fine", "Fines", "Finas"),
     "Kräftig": ("Bold", "Épaisses", "Gruesas"),
+    "Willkommen": ("Welcome", "Bienvenue", "Bienvenido"),
+    "Proledo hält dein OLED-Display in Bewegung, damit sich nichts einbrennt.": (
+        "Proledo keeps your OLED display moving so nothing burns in.",
+        "Proledo garde ton écran OLED en mouvement pour que rien ne marque.",
+        "Proledo mantiene tu pantalla OLED en movimiento para que nada se queme."),
+    "Füge unten ein Video hinzu: per YouTube-Link, als eigene Datei oder selbst erzeugt.": (
+        "Add a video below: from a YouTube link, your own file, or made right here.",
+        "Ajoute une vidéo ci-dessous : lien YouTube, ton propre fichier ou créée ici.",
+        "Añade un vídeo abajo: con un enlace de YouTube, tu propio archivo o creado aquí."),
+    "Wähle unter „Monitore“, wo es laufen soll.": (
+        "Pick where it plays under “Displays”.",
+        "Choisis où elle s'affiche dans « Écrans ».",
+        "Elige dónde se reproduce en «Pantallas»."),
+    "Blende bei Bedarf Menüleiste und Dock aus.": (
+        "Hide the menu bar and Dock if you like.",
+        "Masque la barre des menus et le Dock si tu veux.",
+        "Oculta la barra de menús y el Dock si quieres."),
+    "Hintergrund wird erzeugt · %d %%": ("Creating wallpaper · %d %%", "Création du fond · %d %%", "Creando fondo · %d %%"),
+    "Wird erzeugt · %d %%": ("Creating · %d %%", "Création · %d %%", "Creando · %d %%"),
+    "Im Hintergrund weiterrechnen": ("Keep working in the background", "Continuer en arrière-plan", "Seguir en segundo plano"),
+    "In den Papierkorb legen": ("Move to Trash", "Placer dans la corbeille", "Trasladar a la papelera"),
 }
 
 root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

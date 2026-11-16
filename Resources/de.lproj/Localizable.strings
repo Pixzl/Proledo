@@ -34,6 +34,12 @@
 "Unbenanntes Video" = "Unbenanntes Video";
 "yt-dlp konnte nicht gestartet werden: %@" = "yt-dlp konnte nicht gestartet werden: %@";
 "Download fehlgeschlagen (Code %d)." = "Download fehlgeschlagen (Code %d).";
+"Willkommen" = "Willkommen";
+"Proledo hält dein OLED-Display in Bewegung, damit sich nichts einbrennt." = "Proledo hält dein OLED-Display in Bewegung, damit sich nichts einbrennt.";
+"Füge unten ein Video hinzu: per YouTube-Link, als eigene Datei oder selbst erzeugt." = "Füge unten ein Video hinzu: per YouTube-Link, als eigene Datei oder selbst erzeugt.";
+"Wähle unter „Monitore“, wo es laufen soll." = "Wähle unter „Monitore“, wo es laufen soll.";
+"Blende bei Bedarf Menüleiste und Dock aus." = "Blende bei Bedarf Menüleiste und Dock aus.";
+"Hintergrund wird erzeugt · %d %%" = "Hintergrund wird erzeugt · %d %%";
 "Kein Video aktiv" = "Kein Video aktiv";
 "Läuft auf 1 Monitor" = "Läuft auf 1 Monitor";
 "Läuft auf %d Monitoren" = "Läuft auf %d Monitoren";
@@ -48,6 +54,7 @@
 "Video-Infos werden geladen…" = "Video-Infos werden geladen…";
 "yt-dlp fehlt. Installieren mit: brew install yt-dlp" = "yt-dlp fehlt. Installieren mit: brew install yt-dlp";
 "Eigene Videodatei wählen…" = "Eigene Videodatei wählen…";
+"Wird erzeugt · %d %%" = "Wird erzeugt · %d %%";
 "Hintergrund erzeugen…" = "Hintergrund erzeugen…";
 "Download abbrechen" = "Download abbrechen";
 "%@ von ≈ %@" = "%@ von ≈ %@";
@@ -63,6 +70,7 @@
 "Ziemlich groß. Ein kürzerer Ausschnitt oder eine kleinere Qualität spart Platz." = "Ziemlich groß. Ein kürzerer Ausschnitt oder eine kleinere Qualität spart Platz.";
 "Laden" = "Laden";
 "Hintergrund erzeugen" = "Hintergrund erzeugen";
+"Im Hintergrund weiterrechnen" = "Im Hintergrund weiterrechnen";
 "Schließen" = "Schließen";
 "Neues Muster" = "Neues Muster";
 "Monitor" = "Monitor";
@@ -77,7 +85,6 @@
 "Monitore" = "Monitore";
 "Alle aus" = "Alle aus";
 "Für alle" = "Für alle";
-"Füge oben ein Video hinzu, dann kannst du es hier jedem Monitor zuordnen." = "Füge oben ein Video hinzu, dann kannst du es hier jedem Monitor zuordnen.";
 "Ausgeblendete Leisten kommen zurück, sobald die Maus an den Rand fährt." = "Ausgeblendete Leisten kommen zurück, sobald die Maus an den Rand fährt.";
 "Aus" = "Aus";
 "Menüleiste" = "Menüleiste";
@@ -90,12 +97,11 @@
 "Doppelklick zum Umbenennen" = "Doppelklick zum Umbenennen";
 "Sparsame Version wird erstellt…" = "Sparsame Version wird erstellt…";
 "Umbenennen" = "Umbenennen";
-"Video löschen" = "Video löschen";
+"In den Papierkorb legen" = "In den Papierkorb legen";
 "Auf allen Monitoren zeigen" = "Auf allen Monitoren zeigen";
 "Auf %@ zeigen" = "Auf %@ zeigen";
 "Umbenennen…" = "Umbenennen…";
 "Im Finder zeigen" = "Im Finder zeigen";
-"Löschen" = "Löschen";
 "Erzeugt" = "Erzeugt";
 "Datei" = "Datei";
 "sparsam" = "sparsam";

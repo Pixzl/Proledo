@@ -10,6 +10,9 @@ struct MenuView: View {
             if state.generatorOpen {
                 GeneratorCard()
             } else {
+                if state.library.isEmpty && state.generatorProgress == nil {
+                    WelcomeCard()
+                }
                 AddVideoCard()
                 ScreensCard()
                 if !state.library.isEmpty {
@@ -105,10 +108,42 @@ private struct HintText: View {
     }
 }
 
+private struct WelcomeCard: View {
+    var body: some View {
+        Card(title: L("Willkommen")) {
+            VStack(alignment: .leading, spacing: 10) {
+                Text(L("Proledo hält dein OLED-Display in Bewegung, damit sich nichts einbrennt."))
+                    .font(.callout)
+                    .fixedSize(horizontal: false, vertical: true)
+                step(1, L("Füge unten ein Video hinzu: per YouTube-Link, als eigene Datei oder selbst erzeugt."))
+                step(2, L("Wähle unter „Monitore“, wo es laufen soll."))
+                step(3, L("Blende bei Bedarf Menüleiste und Dock aus."))
+            }
+        }
+    }
+
+    private func step(_ number: Int, _ text: String) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: 8) {
+            Text("\(number)")
+                .font(.caption.weight(.bold))
+                .foregroundStyle(.white)
+                .frame(width: 18, height: 18)
+                .background(Circle().fill(Color.accentColor))
+            Text(text)
+                .font(.callout)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+}
+
 private struct HeaderView: View {
     @EnvironmentObject private var state: AppState
 
     private var status: (text: String, color: Color) {
+        if let progress = state.generatorProgress, !state.generatorOpen {
+            return (String(format: L("Hintergrund wird erzeugt · %d %%"), Int(progress * 100)), .blue)
+        }
         if let reason = state.pauseReason { return (reason, .orange) }
         let count = state.activeScreenCount
         if count == 0 { return (L("Kein Video aktiv"), .secondary) }
@@ -223,9 +258,12 @@ private struct AddVideoCard: View {
             Button {
                 state.openGenerator()
             } label: {
-                Label(L("Hintergrund erzeugen…"), systemImage: "sparkles")
+                if let progress = state.generatorProgress {
+                    Label(String(format: L("Wird erzeugt · %d %%"), Int(progress * 100)), systemImage: "sparkles")
+                } else {
+                    Label(L("Hintergrund erzeugen…"), systemImage: "sparkles")
+                }
             }
-            .disabled(state.generatorOpen)
         }
         .buttonStyle(.link)
         .font(.caption)
@@ -407,8 +445,7 @@ private struct GeneratorCard: View {
                 Image(systemName: "xmark").foregroundStyle(.secondary)
             }
             .buttonStyle(.borderless)
-            .disabled(busy)
-            .help(L("Schließen"))
+            .help(busy ? L("Im Hintergrund weiterrechnen") : L("Schließen"))
         } content: {
             VStack(alignment: .leading, spacing: 10) {
                 preview
@@ -584,9 +621,6 @@ private struct ScreensCard: View {
                     if screen.id != state.screens.last?.id { Divider() }
                 }
             }
-            if state.library.isEmpty {
-                HintText(text: L("Füge oben ein Video hinzu, dann kannst du es hier jedem Monitor zuordnen."))
-            }
             HintText(text: L("Ausgeblendete Leisten kommen zurück, sobald die Maus an den Rand fährt."),
                      icon: "info.circle")
         }
@@ -613,14 +647,25 @@ private struct ScreenRow: View {
                         Text(subtitle).font(.caption2).foregroundStyle(.secondary)
                     }
                     Spacer(minLength: 6)
-                    Picker("", selection: videoBinding) {
-                        Text(L("Aus")).tag(UUID?.none)
+                    Menu {
+                        Toggle(isOn: choice(nil)) {
+                            Label(L("Aus"), systemImage: "nosign")
+                        }
                         if !state.library.isEmpty { Divider() }
                         ForEach(state.library) { item in
-                            Text(item.title).tag(Optional(item.id))
+                            Toggle(isOn: choice(item.id)) {
+                                Label {
+                                    Text(item.title)
+                                } icon: {
+                                    Image(nsImage: state.menuThumbnail(for: item.id))
+                                }
+                            }
                         }
+                    } label: {
+                        Text(assigned?.title ?? L("Aus"))
+                            .lineLimit(1)
+                            .truncationMode(.middle)
                     }
-                    .labelsHidden()
                     .frame(width: 140)
                     .disabled(state.library.isEmpty)
                 }
@@ -644,9 +689,11 @@ private struct ScreenRow: View {
         return parts.joined(separator: " · ")
     }
 
-    private var videoBinding: Binding<UUID?> {
-        Binding(get: { state.assignment(for: screen.id) },
-                set: { state.assign($0, to: screen.id) })
+    private func choice(_ id: UUID?) -> Binding<Bool> {
+        Binding(
+            get: { state.assignment(for: screen.id) == id },
+            set: { if $0 { state.assign(id, to: screen.id) } }
+        )
     }
 
     private func optionBinding(_ keyPath: WritableKeyPath<ScreenOptions, Bool>) -> Binding<Bool> {
@@ -800,7 +847,7 @@ private struct LibraryRow: View {
                         Image(systemName: "trash").foregroundStyle(.secondary)
                     }
                     .buttonStyle(.borderless)
-                    .help(L("Video löschen"))
+                    .help(L("In den Papierkorb legen"))
                 }
             } else if usedOn > 0 {
                 Image(systemName: "checkmark.circle.fill")
@@ -820,7 +867,7 @@ private struct LibraryRow: View {
             Divider()
             Button(L("Umbenennen…"), action: startRename)
             Button(L("Im Finder zeigen")) { state.revealInFinder(item) }
-            Button(L("Löschen"), role: .destructive) { state.delete(item) }
+            Button(L("In den Papierkorb legen"), role: .destructive) { state.delete(item) }
         }
     }
 

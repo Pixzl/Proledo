@@ -34,6 +34,12 @@
 "Unbenanntes Video" = "Untitled video";
 "yt-dlp konnte nicht gestartet werden: %@" = "Couldn't start yt-dlp: %@";
 "Download fehlgeschlagen (Code %d)." = "Download failed (code %d).";
+"Willkommen" = "Welcome";
+"Proledo hält dein OLED-Display in Bewegung, damit sich nichts einbrennt." = "Proledo keeps your OLED display moving so nothing burns in.";
+"Füge unten ein Video hinzu: per YouTube-Link, als eigene Datei oder selbst erzeugt." = "Add a video below: from a YouTube link, your own file, or made right here.";
+"Wähle unter „Monitore“, wo es laufen soll." = "Pick where it plays under “Displays”.";
+"Blende bei Bedarf Menüleiste und Dock aus." = "Hide the menu bar and Dock if you like.";
+"Hintergrund wird erzeugt · %d %%" = "Creating wallpaper · %d %%";
 "Kein Video aktiv" = "No video playing";
 "Läuft auf 1 Monitor" = "Playing on 1 display";
 "Läuft auf %d Monitoren" = "Playing on %d displays";
@@ -48,6 +54,7 @@
 "Video-Infos werden geladen…" = "Loading video info…";
 "yt-dlp fehlt. Installieren mit: brew install yt-dlp" = "yt-dlp is missing. Install it with: brew install yt-dlp";
 "Eigene Videodatei wählen…" = "Choose your own video file…";
+"Wird erzeugt · %d %%" = "Creating · %d %%";
 "Hintergrund erzeugen…" = "Create wallpaper…";
 "Download abbrechen" = "Cancel download";
 "%@ von ≈ %@" = "%@ of ≈ %@";
@@ -63,6 +70,7 @@
 "Ziemlich groß. Ein kürzerer Ausschnitt oder eine kleinere Qualität spart Platz." = "That's pretty big. A shorter clip or lower quality saves space.";
 "Laden" = "Download";
 "Hintergrund erzeugen" = "Create wallpaper";
+"Im Hintergrund weiterrechnen" = "Keep working in the background";
 "Schließen" = "Close";
 "Neues Muster" = "New pattern";
 "Monitor" = "Display";
@@ -77,7 +85,6 @@
 "Monitore" = "Displays";
 "Alle aus" = "All off";
 "Für alle" = "All displays";
-"Füge oben ein Video hinzu, dann kannst du es hier jedem Monitor zuordnen." = "Add a video above, then you can pick it for each display here.";
 "Ausgeblendete Leisten kommen zurück, sobald die Maus an den Rand fährt." = "Hidden bars come back as soon as your pointer hits the edge.";
 "Aus" = "Off";
 "Menüleiste" = "Menu bar";
@@ -90,12 +97,11 @@
 "Doppelklick zum Umbenennen" = "Double-click to rename";
 "Sparsame Version wird erstellt…" = "Creating a lighter version…";
 "Umbenennen" = "Rename";
-"Video löschen" = "Delete video";
+"In den Papierkorb legen" = "Move to Trash";
 "Auf allen Monitoren zeigen" = "Show on all displays";
 "Auf %@ zeigen" = "Show on %@";
 "Umbenennen…" = "Rename…";
 "Im Finder zeigen" = "Show in Finder";
-"Löschen" = "Delete";
 "Erzeugt" = "Generated";
 "Datei" = "File";
 "sparsam" = "eco";

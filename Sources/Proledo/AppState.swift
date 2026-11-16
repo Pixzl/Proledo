@@ -278,24 +278,35 @@ final class AppState: ObservableObject {
     func importLocalFile() {
         let panel = NSOpenPanel()
         panel.allowedContentTypes = [.movie]
-        panel.allowsMultipleSelection = false
+        panel.allowsMultipleSelection = true
         panel.message = L("Video als Hintergrund wählen")
         NSApp.activate(ignoringOtherApps: true)
-        guard panel.runModal() == .OK, let source = panel.url else { return }
+        guard panel.runModal() == .OK else { return }
+        importFiles(panel.urls)
+    }
 
-        let id = UUID()
-        let target = Storage.videosDir.appendingPathComponent("\(id.uuidString).\(source.pathExtension.lowercased())")
+    @discardableResult
+    func importFiles(_ urls: [URL]) -> Bool {
+        let movies = urls.filter { url in
+            (try? url.resourceValues(forKeys: [.contentTypeKey]).contentType)?.conforms(to: .movie) == true
+        }
+        guard !movies.isEmpty else { return false }
         phase = .importing
-        do {
-            try FileManager.default.copyItem(at: source, to: target)
-        } catch {
-            phase = .failed(String(format: L("Kopieren fehlgeschlagen: %@"), error.localizedDescription))
-            return
-        }
         Task {
-            await addToLibrary(id: id, file: target,
-                               title: source.deletingPathExtension().lastPathComponent, source: nil)
+            for source in movies {
+                let id = UUID()
+                let target = Storage.videosDir.appendingPathComponent("\(id.uuidString).\(source.pathExtension.lowercased())")
+                do {
+                    try FileManager.default.copyItem(at: source, to: target)
+                } catch {
+                    phase = .failed(String(format: L("Kopieren fehlgeschlagen: %@"), error.localizedDescription))
+                    return
+                }
+                await addToLibrary(id: id, file: target,
+                                   title: source.deletingPathExtension().lastPathComponent, source: nil)
+            }
         }
+        return true
     }
 
     @discardableResult
@@ -354,6 +365,10 @@ final class AppState: ObservableObject {
     }
 
     func openGenerator() {
+        if generatorProgress != nil {
+            generatorOpen = true
+            return
+        }
         if generatorScreenID == nil || !screens.contains(where: { $0.id == generatorScreenID }) {
             generatorScreenID = (screens.first { assignment(for: $0.id) == nil } ?? screens.first)?.id
         }
@@ -363,9 +378,8 @@ final class AppState: ObservableObject {
     }
 
     func closeGenerator() {
-        guard generatorProgress == nil else { return }
         generatorOpen = false
-        generatorPreview = nil
+        if generatorProgress == nil { generatorPreview = nil }
     }
 
     func shuffleGeneratorPattern() {
@@ -443,6 +457,29 @@ final class AppState: ObservableObject {
         return NSImage(cgImage: cgImage, size: NSSize(width: cgImage.width, height: cgImage.height))
     }
 
+    private var menuThumbnailCache: [UUID: NSImage] = [:]
+
+    func menuThumbnail(for id: UUID) -> NSImage {
+        if let cached = menuThumbnailCache[id] { return cached }
+        let size = NSSize(width: 32, height: 18)
+        let source = thumbnails[id]
+        let image = NSImage(size: size, flipped: false) { rect in
+            let clip = NSBezierPath(roundedRect: rect, xRadius: 3, yRadius: 3)
+            clip.addClip()
+            NSColor.black.setFill()
+            rect.fill()
+            if let source, source.size.width > 0, source.size.height > 0 {
+                let scale = max(rect.width / source.size.width, rect.height / source.size.height)
+                let drawn = NSSize(width: source.size.width * scale, height: source.size.height * scale)
+                source.draw(in: NSRect(x: (rect.width - drawn.width) / 2, y: (rect.height - drawn.height) / 2,
+                                       width: drawn.width, height: drawn.height))
+            }
+            return true
+        }
+        if source != nil { menuThumbnailCache[id] = image }
+        return image
+    }
+
     var librarySize: Int64 {
         library.reduce(0) { $0 + ($1.fileSize ?? 0) + ($1.hasSeparateEco ? ($1.ecoFileSize ?? 0) : 0) }
     }
@@ -498,9 +535,19 @@ final class AppState: ObservableObject {
         s.assignments = s.assignments.filter { $0.value != item.id }
         settings = s
         applyAll()
-        try? FileManager.default.removeItem(at: item.fileURL)
-        try? FileManager.default.removeItem(at: item.thumbnailURL)
-        if item.hasSeparateEco, let eco = item.ecoURL { try? FileManager.default.removeItem(at: eco) }
+        let fm = FileManager.default
+        let safeTitle = item.title
+            .components(separatedBy: CharacterSet(charactersIn: "/:\\?%*|\"<>"))
+            .joined(separator: "-")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        let named = Storage.videosDir.appendingPathComponent(
+            "\(safeTitle.isEmpty ? item.id.uuidString : safeTitle).\(item.fileURL.pathExtension)")
+        let toTrash = (try? fm.moveItem(at: item.fileURL, to: named)) != nil ? named : item.fileURL
+        if (try? fm.trashItem(at: toTrash, resultingItemURL: nil)) == nil {
+            try? fm.removeItem(at: toTrash)
+        }
+        try? fm.removeItem(at: item.thumbnailURL)
+        if item.hasSeparateEco, let eco = item.ecoURL { try? fm.removeItem(at: eco) }
     }
 
     func revealInFinder(_ item: VideoItem? = nil) {

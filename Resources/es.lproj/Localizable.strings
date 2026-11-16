@@ -34,6 +34,12 @@
 "Unbenanntes Video" = "Vídeo sin título";
 "yt-dlp konnte nicht gestartet werden: %@" = "No se pudo iniciar yt-dlp: %@";
 "Download fehlgeschlagen (Code %d)." = "La descarga falló (código %d).";
+"Willkommen" = "Bienvenido";
+"Proledo hält dein OLED-Display in Bewegung, damit sich nichts einbrennt." = "Proledo mantiene tu pantalla OLED en movimiento para que nada se queme.";
+"Füge unten ein Video hinzu: per YouTube-Link, als eigene Datei oder selbst erzeugt." = "Añade un vídeo abajo: con un enlace de YouTube, tu propio archivo o creado aquí.";
+"Wähle unter „Monitore“, wo es laufen soll." = "Elige dónde se reproduce en «Pantallas».";
+"Blende bei Bedarf Menüleiste und Dock aus." = "Oculta la barra de menús y el Dock si quieres.";
+"Hintergrund wird erzeugt · %d %%" = "Creando fondo · %d %%";
 "Kein Video aktiv" = "Ningún vídeo activo";
 "Läuft auf 1 Monitor" = "Reproduciendo en 1 pantalla";
 "Läuft auf %d Monitoren" = "Reproduciendo en %d pantallas";
@@ -48,6 +54,7 @@
 "Video-Infos werden geladen…" = "Cargando información del vídeo…";
 "yt-dlp fehlt. Installieren mit: brew install yt-dlp" = "Falta yt-dlp. Instálalo con: brew install yt-dlp";
 "Eigene Videodatei wählen…" = "Elegir un archivo de vídeo…";
+"Wird erzeugt · %d %%" = "Creando · %d %%";
 "Hintergrund erzeugen…" = "Crear fondo…";
 "Download abbrechen" = "Cancelar descarga";
 "%@ von ≈ %@" = "%@ de ≈ %@";
@@ -63,6 +70,7 @@
 "Ziemlich groß. Ein kürzerer Ausschnitt oder eine kleinere Qualität spart Platz." = "Es bastante grande. Un fragmento más corto o menos calidad ahorra espacio.";
 "Laden" = "Descargar";
 "Hintergrund erzeugen" = "Crear fondo";
+"Im Hintergrund weiterrechnen" = "Seguir en segundo plano";
 "Schließen" = "Cerrar";
 "Neues Muster" = "Nuevo patrón";
 "Monitor" = "Pantalla";
@@ -77,7 +85,6 @@
 "Monitore" = "Pantallas";
 "Alle aus" = "Desactivar todas";
 "Für alle" = "Todas";
-"Füge oben ein Video hinzu, dann kannst du es hier jedem Monitor zuordnen." = "Añade un vídeo arriba y luego asígnalo aquí a cada pantalla.";
 "Ausgeblendete Leisten kommen zurück, sobald die Maus an den Rand fährt." = "Las barras ocultas vuelven en cuanto el puntero llega al borde.";
 "Aus" = "Desactivado";
 "Menüleiste" = "Barra de menús";
@@ -90,12 +97,11 @@
 "Doppelklick zum Umbenennen" = "Doble clic para renombrar";
 "Sparsame Version wird erstellt…" = "Creando una versión ligera…";
 "Umbenennen" = "Renombrar";
-"Video löschen" = "Eliminar vídeo";
+"In den Papierkorb legen" = "Trasladar a la papelera";
 "Auf allen Monitoren zeigen" = "Mostrar en todas las pantallas";
 "Auf %@ zeigen" = "Mostrar en %@";
 "Umbenennen…" = "Renombrar…";
 "Im Finder zeigen" = "Mostrar en el Finder";
-"Löschen" = "Eliminar";
 "Erzeugt" = "Generado";
 "Datei" = "Archivo";
 "sparsam" = "eco";
