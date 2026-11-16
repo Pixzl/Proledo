@@ -42,6 +42,8 @@ struct Settings: Codable, Equatable {
     var pauseOnBattery = true
     var userPaused = false
     var powerSaving = false
+    var rotatingScreens: [String] = []
+    var rotationMinutes = 30
 
     init() {}
 
@@ -52,6 +54,8 @@ struct Settings: Codable, Equatable {
         pauseOnBattery = try c.decodeIfPresent(Bool.self, forKey: .pauseOnBattery) ?? true
         userPaused = try c.decodeIfPresent(Bool.self, forKey: .userPaused) ?? false
         powerSaving = try c.decodeIfPresent(Bool.self, forKey: .powerSaving) ?? false
+        rotatingScreens = try c.decodeIfPresent([String].self, forKey: .rotatingScreens) ?? []
+        rotationMinutes = try c.decodeIfPresent(Int.self, forKey: .rotationMinutes) ?? 30
     }
 }
 
@@ -60,6 +64,7 @@ struct ScreenInfo: Identifiable, Hashable {
     let name: String
     let isBuiltIn: Bool
     let pixelSize: CGSize
+    let frame: CGRect
 }
 
 struct QualityOption: Identifiable, Hashable {

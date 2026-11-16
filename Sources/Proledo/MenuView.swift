@@ -160,9 +160,15 @@ private struct HeaderView: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text("Proledo").font(.system(size: 14, weight: .semibold))
                 HStack(spacing: 5) {
-                    Circle().fill(status.color).frame(width: 6, height: 6)
-                    Text(status.text).font(.caption).foregroundStyle(.secondary)
+                    Circle()
+                        .fill(status.color)
+                        .frame(width: 6, height: 6)
+                        .shadow(color: status.color.opacity(0.8), radius: 3)
+                    Text(status.text).font(.caption).foregroundStyle(.secondary).lineLimit(1)
                 }
+                .padding(.horizontal, 7)
+                .padding(.vertical, 2)
+                .background(Capsule().fill(status.color.opacity(0.12)))
             }
             Spacer()
             Button {
@@ -598,11 +604,23 @@ private struct GeneratorCard: View {
 
 private struct ScreensCard: View {
     @EnvironmentObject private var state: AppState
+    @State private var selectedID: String?
+
+    private var selected: ScreenInfo? {
+        state.screens.first { $0.id == selectedID } ?? state.screens.first
+    }
+
+    private var anyRotating: Bool {
+        state.screens.contains { state.isRotating($0.id) }
+    }
 
     var body: some View {
         Card(title: L("Monitore")) {
             if !state.library.isEmpty {
                 Menu {
+                    Button(L("Alle abwechselnd")) { state.rotateAll() }
+                        .disabled(state.library.count < 2)
+                    Divider()
                     ForEach(state.library) { item in
                         Button(item.title) { state.assignToAll(item.id) }
                     }
@@ -615,10 +633,25 @@ private struct ScreensCard: View {
                 .fixedSize()
             }
         } content: {
-            VStack(spacing: 12) {
-                ForEach(state.screens) { screen in
-                    ScreenRow(screen: screen)
-                    if screen.id != state.screens.last?.id { Divider() }
+            if state.screens.count > 1 {
+                ScreenMap(selectedID: Binding(get: { selected?.id }, set: { selectedID = $0 }))
+            }
+            if let screen = selected {
+                ScreenDetail(screen: screen)
+            }
+            if anyRotating {
+                HStack {
+                    Label(L("Wechsel alle"), systemImage: "arrow.triangle.2.circlepath")
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                    Picker("", selection: $state.settings.rotationMinutes) {
+                        ForEach([10, 30, 60, 120], id: \.self) { minutes in
+                            Text(Format.readableDuration(Double(minutes * 60))).tag(minutes)
+                        }
+                    }
+                    .labelsHidden()
+                    .fixedSize()
                 }
             }
             HintText(text: L("Ausgeblendete Leisten kommen zurück, sobald die Maus an den Rand fährt."),
@@ -627,7 +660,89 @@ private struct ScreensCard: View {
     }
 }
 
-private struct ScreenRow: View {
+private struct ScreenMap: View {
+    @EnvironmentObject private var state: AppState
+    @Binding var selectedID: String?
+
+    var body: some View {
+        GeometryReader { geo in
+            let union = state.screens.reduce(CGRect.null) { $0.union($1.frame) }
+            let pad: CGFloat = 4
+            let scale = min((geo.size.width - 2 * pad) / max(union.width, 1),
+                            (geo.size.height - 2 * pad) / max(union.height, 1))
+            let originX = (geo.size.width - union.width * scale) / 2
+            let originY = (geo.size.height - union.height * scale) / 2
+            ZStack(alignment: .topLeading) {
+                ForEach(state.screens) { screen in
+                    let gap: CGFloat = 5
+                    let width = max(screen.frame.width * scale - gap, 8)
+                    let height = max(screen.frame.height * scale - gap, 8)
+                    ScreenTile(screen: screen, selected: screen.id == selectedID)
+                        .frame(width: width, height: height)
+                        .offset(x: originX + (screen.frame.minX - union.minX) * scale + gap / 2,
+                                y: originY + (union.maxY - screen.frame.maxY) * scale + gap / 2)
+                        .onTapGesture { selectedID = screen.id }
+                }
+            }
+        }
+        .frame(height: 118)
+        .padding(.vertical, 2)
+    }
+}
+
+private struct ScreenTile: View {
+    @EnvironmentObject private var state: AppState
+    let screen: ScreenInfo
+    let selected: Bool
+    @State private var hovering = false
+
+    var body: some View {
+        let video = state.assignment(for: screen.id)
+        let options = state.options(for: screen.id)
+        ZStack {
+            if let video, let image = state.thumbnails[video] {
+                Color.black
+                Image(nsImage: image).resizable().aspectRatio(contentMode: .fill)
+            } else {
+                Color(white: 0.1)
+                Image(systemName: screen.isBuiltIn ? "laptopcomputer" : "display")
+                    .font(.system(size: 11))
+                    .foregroundStyle(.white.opacity(0.35))
+            }
+            VStack(spacing: 0) {
+                if options.hideMenuBar {
+                    Rectangle().fill(.black).frame(height: 3)
+                } else {
+                    Rectangle().fill(.white.opacity(0.35)).frame(height: 2)
+                }
+                Spacer()
+            }
+        }
+        .clipShape(RoundedRectangle(cornerRadius: 4, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 4, style: .continuous)
+                .strokeBorder(selected ? Color.accentColor : Color.white.opacity(hovering ? 0.45 : 0.2),
+                              lineWidth: selected ? 2.5 : 1)
+        )
+        .overlay(alignment: .topTrailing) {
+            if state.isRotating(screen.id) {
+                Image(systemName: "arrow.triangle.2.circlepath")
+                    .font(.system(size: 7, weight: .bold))
+                    .foregroundStyle(.white)
+                    .padding(3)
+                    .background(Circle().fill(.black.opacity(0.65)))
+                    .padding(4)
+            }
+        }
+        .shadow(color: selected ? Color.accentColor.opacity(0.35) : .clear, radius: 5)
+        .contentShape(Rectangle())
+        .onHover { hovering = $0 }
+        .help(screen.name)
+        .animation(.easeOut(duration: 0.15), value: selected)
+    }
+}
+
+private struct ScreenDetail: View {
     @EnvironmentObject private var state: AppState
     let screen: ScreenInfo
 
@@ -635,48 +750,62 @@ private struct ScreenRow: View {
         state.assignment(for: screen.id).flatMap { id in state.library.first { $0.id == id } }
     }
 
-    var body: some View {
-        HStack(alignment: .center, spacing: 10) {
-            MonitorPreview(screen: screen, image: assigned.flatMap { state.thumbnails[$0.id] },
-                           active: assigned != nil)
+    private var rotating: Bool { state.isRotating(screen.id) }
 
-            VStack(alignment: .leading, spacing: 6) {
-                HStack(alignment: .firstTextBaseline) {
-                    VStack(alignment: .leading, spacing: 1) {
-                        Text(screen.name).font(.callout.weight(.medium)).lineLimit(1)
-                        Text(subtitle).font(.caption2).foregroundStyle(.secondary)
-                    }
-                    Spacer(minLength: 6)
-                    Menu {
-                        Toggle(isOn: choice(nil)) {
-                            Label(L("Aus"), systemImage: "nosign")
-                        }
-                        if !state.library.isEmpty { Divider() }
-                        ForEach(state.library) { item in
-                            Toggle(isOn: choice(item.id)) {
-                                Label {
-                                    Text(item.title)
-                                } icon: {
-                                    Image(nsImage: state.menuThumbnail(for: item.id))
-                                }
-                            }
-                        }
-                    } label: {
-                        Text(assigned?.title ?? L("Aus"))
-                            .lineLimit(1)
-                            .truncationMode(.middle)
-                    }
-                    .frame(width: 140)
-                    .disabled(state.library.isEmpty)
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 8) {
+                Image(systemName: screen.isBuiltIn ? "laptopcomputer" : "display")
+                    .foregroundStyle(.secondary)
+                    .frame(width: 18)
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(screen.name).font(.callout.weight(.semibold)).lineLimit(1)
+                    Text(subtitle).font(.caption2).foregroundStyle(.secondary)
                 }
-                HStack(spacing: 6) {
-                    BarToggle(title: L("Menüleiste"), icon: "menubar.rectangle",
-                              help: L("Menüleiste auf diesem Monitor ausblenden"),
-                              isOn: optionBinding(\.hideMenuBar))
-                    BarToggle(title: L("Dock"), icon: "dock.rectangle",
-                              help: L("Dock auf diesem Monitor ausblenden (wirkt, wenn das Dock dort ist)"),
-                              isOn: optionBinding(\.hideDock))
+                Spacer()
+            }
+
+            Menu {
+                Toggle(isOn: choice(nil)) {
+                    Label(L("Aus"), systemImage: "nosign")
                 }
+                Toggle(isOn: rotatingBinding) {
+                    Label(L("Alle abwechselnd"), systemImage: "arrow.triangle.2.circlepath")
+                }
+                .disabled(state.library.count < 2)
+                if !state.library.isEmpty { Divider() }
+                ForEach(state.library) { item in
+                    Toggle(isOn: choice(item.id)) {
+                        Label {
+                            Text(item.title)
+                        } icon: {
+                            Image(nsImage: state.menuThumbnail(for: item.id))
+                        }
+                    }
+                }
+            } label: {
+                if rotating {
+                    Label(String(format: L("Abwechselnd · %@"), assigned?.title ?? ""),
+                          systemImage: "arrow.triangle.2.circlepath")
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+                } else {
+                    Text(assigned?.title ?? L("Aus"))
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+                }
+            }
+            .frame(maxWidth: .infinity)
+            .disabled(state.library.isEmpty)
+
+            HStack(spacing: 6) {
+                BarToggle(title: L("Menüleiste"), icon: "menubar.rectangle",
+                          help: L("Menüleiste auf diesem Monitor ausblenden"),
+                          isOn: optionBinding(\.hideMenuBar))
+                BarToggle(title: L("Dock"), icon: "dock.rectangle",
+                          help: L("Dock auf diesem Monitor ausblenden (wirkt, wenn das Dock dort ist)"),
+                          isOn: optionBinding(\.hideDock))
+                Spacer()
             }
         }
     }
@@ -689,9 +818,13 @@ private struct ScreenRow: View {
         return parts.joined(separator: " · ")
     }
 
+    private var rotatingBinding: Binding<Bool> {
+        Binding(get: { rotating }, set: { state.setRotating($0, for: screen.id) })
+    }
+
     private func choice(_ id: UUID?) -> Binding<Bool> {
         Binding(
-            get: { state.assignment(for: screen.id) == id },
+            get: { !rotating && state.fixedAssignment(for: screen.id) == id },
             set: { if $0 { state.assign(id, to: screen.id) } }
         )
     }
@@ -705,36 +838,6 @@ private struct ScreenRow: View {
                 state.setOptions(options, for: screen.id)
             }
         )
-    }
-}
-
-private struct MonitorPreview: View {
-    let screen: ScreenInfo
-    let image: NSImage?
-    let active: Bool
-
-    var body: some View {
-        let box: CGFloat = 46
-        let ratio = screen.pixelSize.width / max(screen.pixelSize.height, 1)
-        let size = ratio >= 1 ? CGSize(width: box, height: box / ratio) : CGSize(width: box * ratio, height: box)
-
-        ZStack {
-            if let image, active {
-                Image(nsImage: image).resizable().aspectRatio(contentMode: .fill)
-            } else {
-                Color.black.opacity(0.85)
-                Image(systemName: screen.isBuiltIn ? "laptopcomputer" : "display")
-                    .font(.system(size: 12))
-                    .foregroundStyle(.white.opacity(0.5))
-            }
-        }
-        .frame(width: size.width, height: size.height)
-        .clipShape(RoundedRectangle(cornerRadius: 4, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: 4, style: .continuous)
-                .strokeBorder(Color.primary.opacity(0.25), lineWidth: 1.5)
-        )
-        .frame(width: box, height: box)
     }
 }
 
@@ -753,19 +856,23 @@ private struct BarToggle: View {
                 Text(title)
             }
             .font(.caption)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 3)
+            .padding(.horizontal, 9)
+            .padding(.vertical, 4)
             .foregroundStyle(isOn ? Color.white : Color.primary.opacity(0.75))
             .background(Capsule().fill(isOn ? Color.accentColor : Color.primary.opacity(0.07)))
             .contentShape(Capsule())
         }
         .buttonStyle(.plain)
         .help(help)
+        .animation(.easeOut(duration: 0.15), value: isOn)
     }
 }
 
 private struct LibraryCard: View {
     @EnvironmentObject private var state: AppState
+
+    private let columns = [GridItem(.flexible(), spacing: 10, alignment: .top),
+                           GridItem(.flexible(), spacing: 10, alignment: .top)]
 
     var body: some View {
         Card(title: L("Bibliothek")) {
@@ -774,19 +881,20 @@ private struct LibraryCard: View {
                 .foregroundStyle(.secondary)
         } content: {
             ScrollView {
-                VStack(spacing: 2) {
+                LazyVGrid(columns: columns, spacing: 12) {
                     ForEach(state.library) { item in
-                        LibraryRow(item: item)
+                        LibraryTile(item: item)
                     }
                 }
+                .padding(.bottom, 2)
             }
-            .frame(maxHeight: 170)
+            .frame(maxHeight: 250)
             .fixedSize(horizontal: false, vertical: true)
         }
     }
 }
 
-private struct LibraryRow: View {
+private struct LibraryTile: View {
     @EnvironmentObject private var state: AppState
     let item: VideoItem
     @State private var hovering = false
@@ -799,66 +907,86 @@ private struct LibraryRow: View {
     }
 
     var body: some View {
-        HStack(spacing: 10) {
-            Thumb(image: state.thumbnails[item.id])
-            VStack(alignment: .leading, spacing: 2) {
-                if editing {
-                    TextField(L("Name"), text: $draftTitle)
-                        .textFieldStyle(.roundedBorder)
-                        .font(.callout)
-                        .focused($titleFocused)
-                        .onSubmit(commitRename)
-                        .onExitCommand { editing = false }
-                        .onChange(of: titleFocused) { _, focused in
-                            if !focused && editing { commitRename() }
+        VStack(alignment: .leading, spacing: 5) {
+            Color.black
+                .aspectRatio(16 / 9, contentMode: .fit)
+                .overlay {
+                    if let image = state.thumbnails[item.id] {
+                        Image(nsImage: image).resizable().aspectRatio(contentMode: .fill)
+                    } else {
+                        Image(systemName: "film").foregroundStyle(.secondary)
+                    }
+                }
+                .overlay(alignment: .topTrailing) {
+                    if hovering && !editing {
+                        HStack(spacing: 2) {
+                            iconButton("pencil", help: L("Umbenennen"), action: startRename)
+                            iconButton("trash", help: L("In den Papierkorb legen")) { state.delete(item) }
                         }
-                } else {
-                    Text(item.title)
-                        .font(.callout)
-                        .lineLimit(1)
-                        .truncationMode(.middle)
-                        .help(L("Doppelklick zum Umbenennen"))
-                        .onTapGesture(count: 2, perform: startRename)
-                }
-                if state.convertingID == item.id {
-                    HStack(spacing: 4) {
-                        ProgressView().controlSize(.mini)
-                        Text(L("Sparsame Version wird erstellt…"))
+                        .padding(4)
+                    } else if usedOn > 0 {
+                        Image(systemName: "checkmark.circle.fill")
+                            .symbolRenderingMode(.palette)
+                            .foregroundStyle(.white, .green)
+                            .font(.system(size: 14))
+                            .padding(5)
+                            .help(usedOn == 1 ? L("Läuft auf 1 Monitor") : String(format: L("Läuft auf %d Monitoren"), usedOn))
                     }
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
-                } else {
-                    Text(details).font(.caption2.monospacedDigit()).foregroundStyle(.secondary)
                 }
-            }
-            Spacer(minLength: 4)
+                .overlay(alignment: .bottomLeading) {
+                    if state.convertingID == item.id {
+                        HStack(spacing: 4) {
+                            ProgressView().controlSize(.mini)
+                            Text(L("Sparsame Version wird erstellt…")).lineLimit(1)
+                        }
+                        .font(.system(size: 9))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 3)
+                        .background(Capsule().fill(.black.opacity(0.7)))
+                        .padding(4)
+                    } else if let duration = item.duration {
+                        Text(Format.duration(duration))
+                            .font(.system(size: 9, weight: .semibold).monospacedDigit())
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 5)
+                            .padding(.vertical, 2)
+                            .background(Capsule().fill(.black.opacity(0.65)))
+                            .padding(5)
+                    }
+                }
+                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        .strokeBorder(Color.primary.opacity(hovering ? 0.3 : 0.1))
+                )
+
             if editing {
-                EmptyView()
-            } else if hovering {
-                HStack(spacing: 8) {
-                    Button(action: startRename) {
-                        Image(systemName: "pencil").foregroundStyle(.secondary)
+                TextField(L("Name"), text: $draftTitle)
+                    .textFieldStyle(.roundedBorder)
+                    .font(.caption)
+                    .focused($titleFocused)
+                    .onSubmit(commitRename)
+                    .onExitCommand { editing = false }
+                    .onChange(of: titleFocused) { _, focused in
+                        if !focused && editing { commitRename() }
                     }
-                    .buttonStyle(.borderless)
-                    .help(L("Umbenennen"))
-                    Button {
-                        state.delete(item)
-                    } label: {
-                        Image(systemName: "trash").foregroundStyle(.secondary)
-                    }
-                    .buttonStyle(.borderless)
-                    .help(L("In den Papierkorb legen"))
-                }
-            } else if usedOn > 0 {
-                Image(systemName: "checkmark.circle.fill")
-                    .foregroundStyle(.green)
-                    .help(usedOn == 1 ? L("Läuft auf 1 Monitor") : String(format: L("Läuft auf %d Monitoren"), usedOn))
+            } else {
+                Text(item.title)
+                    .font(.caption.weight(.medium))
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+                    .help(L("Doppelklick zum Umbenennen"))
+                    .onTapGesture(count: 2, perform: startRename)
             }
+            Text(details)
+                .font(.caption2.monospacedDigit())
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
         }
-        .padding(6)
-        .background(RoundedRectangle(cornerRadius: 8).fill(hovering ? Color.primary.opacity(0.06) : .clear))
         .contentShape(Rectangle())
         .onHover { hovering = $0 }
+        .animation(.easeOut(duration: 0.12), value: hovering)
         .contextMenu {
             Button(L("Auf allen Monitoren zeigen")) { state.assignToAll(item.id) }
             ForEach(state.screens) { screen in
@@ -869,6 +997,18 @@ private struct LibraryRow: View {
             Button(L("Im Finder zeigen")) { state.revealInFinder(item) }
             Button(L("In den Papierkorb legen"), role: .destructive) { state.delete(item) }
         }
+    }
+
+    private func iconButton(_ name: String, help: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: name)
+                .font(.system(size: 10, weight: .semibold))
+                .foregroundStyle(.white)
+                .frame(width: 22, height: 22)
+                .background(Circle().fill(.black.opacity(0.65)))
+        }
+        .buttonStyle(.plain)
+        .help(help)
     }
 
     private func startRename() {
@@ -884,7 +1024,6 @@ private struct LibraryRow: View {
 
     private var details: String {
         var parts: [String] = []
-        if let d = item.duration { parts.append(Format.duration(d)) }
         if let s = item.fileSize { parts.append(Format.bytes(s)) }
         parts.append(item.generated == true ? L("Erzeugt") : item.sourceURL == nil ? L("Datei") : "YouTube")
         if state.settings.powerSaving && item.ecoFileName != nil { parts.append(L("sparsam")) }
@@ -904,32 +1043,43 @@ private struct FooterView: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            VStack(alignment: .leading, spacing: 4) {
-                Toggle(L("Beim Anmelden starten"), isOn: loginBinding)
-                Toggle(L("Im Akkubetrieb pausieren"), isOn: $state.settings.pauseOnBattery)
-                Toggle(L("Stromsparmodus (30 fps, max. 1440p)"), isOn: $state.settings.powerSaving)
-                    .help(L("Erstellt von jedem Video einmalig eine sparsame Kopie und spielt diese ab. Das Original bleibt erhalten."))
-            }
-            .toggleStyle(.checkbox)
-            .font(.caption)
-
+        VStack(alignment: .leading, spacing: 6) {
             if let hint = state.launchAtLoginHint {
                 HintText(text: hint, color: .orange, icon: "exclamationmark.triangle.fill")
             }
-
-            HStack {
+            if let update = state.update {
+                Button {
+                    NSWorkspace.shared.open(update.url)
+                } label: {
+                    Label(String(format: L("Update auf %@ verfügbar"), update.version), systemImage: "arrow.down.circle.fill")
+                }
+                .buttonStyle(.link)
+                .font(.caption)
+            }
+            HStack(spacing: 10) {
                 Text("Proledo \(version)")
                     .font(.caption2)
                     .foregroundStyle(.tertiary)
-                Spacer()
-                Button {
-                    state.revealInFinder()
-                } label: {
-                    Image(systemName: "folder")
+                if state.settings.powerSaving {
+                    Label(L("Stromsparmodus"), systemImage: "leaf.fill")
+                        .font(.caption2)
+                        .foregroundStyle(.green)
                 }
-                .buttonStyle(.borderless)
-                .help(L("Videoordner im Finder öffnen"))
+                Spacer()
+                Menu {
+                    Toggle(L("Beim Anmelden starten"), isOn: loginBinding)
+                    Toggle(L("Im Akkubetrieb pausieren"), isOn: $state.settings.pauseOnBattery)
+                    Toggle(L("Stromsparmodus (30 fps, max. 1440p)"), isOn: $state.settings.powerSaving)
+                    Divider()
+                    Button(L("Videoordner öffnen")) { state.revealInFinder() }
+                    Button(L("Proledo auf GitHub")) { NSWorkspace.shared.open(AppState.repositoryURL) }
+                } label: {
+                    Image(systemName: "gearshape")
+                }
+                .menuStyle(.borderlessButton)
+                .menuIndicator(.hidden)
+                .fixedSize()
+                .help(L("Einstellungen"))
                 Button(L("Beenden")) { NSApp.terminate(nil) }
                     .keyboardShortcut("q")
                     .controlSize(.small)

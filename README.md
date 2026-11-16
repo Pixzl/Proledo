@@ -8,7 +8,7 @@ Made for the MacBook Pro with PROLED XDR display, works on any Mac and any exter
 
 - Downloads YouTube videos without sound, in the quality you pick
 - Grabs just a slice of long videos, like 10 minutes out of a 12-hour one
-- Lets you choose a video per monitor, portrait screens included
+- Lets you choose a video per monitor, portrait screens included, or rotate through all of them
 - Hides the menu bar and Dock per monitor, they come back when your mouse hits the edge
 - Pauses on its own when the desktop is covered, the Mac is locked or running on battery
 - Has a power saving mode that plays a lighter 30 fps copy of each video
@@ -49,3 +49,7 @@ To redraw the icon, run `swift Tools/make-icon.swift <folder>.iconset` and turn 
 ## Note
 
 Only download videos you're allowed to use. YouTube's terms of service restrict downloads.
+
+## License
+
+Proledo is released under the [MIT License](LICENSE). yt-dlp and ffmpeg aren't part of Proledo, you install them yourself and they come with their own licenses.

@@ -74,6 +74,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         login.state = state.launchAtLogin ? .on : .off
         let folder = menu.addItem(withTitle: L("Videoordner öffnen"), action: #selector(quickOpenFolder), keyEquivalent: "")
         folder.target = self
+        let github = menu.addItem(withTitle: L("Proledo auf GitHub"), action: #selector(quickOpenGitHub), keyEquivalent: "")
+        github.target = self
+        if let update = state.update {
+            let item = menu.addItem(withTitle: String(format: L("Update auf %@ verfügbar"), update.version),
+                                    action: #selector(quickOpenUpdate), keyEquivalent: "")
+            item.target = self
+        }
         menu.addItem(.separator())
         menu.addItem(withTitle: L("Proledo beenden"), action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
         menu.popUp(positioning: nil, at: NSPoint(x: 0, y: button.bounds.height + 4), in: button)
@@ -83,6 +90,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     @objc private func quickTogglePowerSaving() { state.settings.powerSaving.toggle() }
     @objc private func quickToggleLogin() { state.setLaunchAtLogin(!state.launchAtLogin) }
     @objc private func quickOpenFolder() { state.revealInFinder() }
+    @objc private func quickOpenGitHub() { NSWorkspace.shared.open(AppState.repositoryURL) }
+    @objc private func quickOpenUpdate() { if let url = state.update?.url { NSWorkspace.shared.open(url) } }
 
     private func updateIcon() {
         let playing = state.pauseReason == nil && state.activeScreenCount > 0

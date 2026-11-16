@@ -160,6 +160,12 @@ T = {
     "Wird erzeugt · %d %%": ("Creating · %d %%", "Création · %d %%", "Creando · %d %%"),
     "Im Hintergrund weiterrechnen": ("Keep working in the background", "Continuer en arrière-plan", "Seguir en segundo plano"),
     "In den Papierkorb legen": ("Move to Trash", "Placer dans la corbeille", "Trasladar a la papelera"),
+    "Proledo auf GitHub": ("Proledo on GitHub", "Proledo sur GitHub", "Proledo en GitHub"),
+    "Update auf %@ verfügbar": ("Update to %@ available", "Mise à jour %@ disponible", "Actualización %@ disponible"),
+    "Alle abwechselnd": ("Rotate all", "Alterner toutes", "Alternar todos"),
+    "Wechsel alle": ("Switch every", "Changer toutes les", "Cambiar cada"),
+    "Abwechselnd · %@": ("Rotating · %@", "Alternance · %@", "Alternando · %@"),
+    "Einstellungen": ("Settings", "Réglages", "Ajustes"),
 }
 
 root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

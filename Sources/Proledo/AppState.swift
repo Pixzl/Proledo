@@ -65,6 +65,7 @@ final class AppState: ObservableObject {
         refreshScreens()
         applyAll()
         processEcoQueue()
+        startUpdateChecks()
     }
 
     func stop() {
@@ -96,6 +97,46 @@ final class AppState: ObservableObject {
         }
     }
 
+    struct UpdateInfo: Equatable {
+        let version: String
+        let url: URL
+    }
+
+    static let repositoryURL = URL(string: "https://github.com/drieken/Proledo")!
+    @Published private(set) var update: UpdateInfo?
+    private var updateTimer: Timer?
+
+    func startUpdateChecks() {
+        Task { await checkForUpdates() }
+        let timer = Timer(timeInterval: 24 * 3600, repeats: true) { [weak self] _ in
+            Task { await self?.checkForUpdates() }
+        }
+        RunLoop.main.add(timer, forMode: .common)
+        updateTimer = timer
+    }
+
+    func checkForUpdates() async {
+        guard let current = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String,
+              let api = URL(string: "https://api.github.com/repos/drieken/Proledo/releases/latest"),
+              let (data, _) = try? await URLSession.shared.data(from: api),
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let tag = json["tag_name"] as? String,
+              let page = (json["html_url"] as? String).flatMap(URL.init(string:))
+        else { return }
+        let latest = tag.hasPrefix("v") ? String(tag.dropFirst()) : tag
+        update = Self.isNewer(latest, than: current) ? UpdateInfo(version: latest, url: page) : nil
+    }
+
+    static func isNewer(_ a: String, than b: String) -> Bool {
+        let x = a.split(separator: ".").map { Int($0) ?? 0 }
+        let y = b.split(separator: ".").map { Int($0) ?? 0 }
+        for i in 0..<max(x.count, y.count) {
+            let l = i < x.count ? x[i] : 0, r = i < y.count ? y[i] : 0
+            if l != r { return l > r }
+        }
+        return false
+    }
+
     var ytDlpAvailable: Bool { Downloader.findYtDlp() != nil }
     var ffmpegAvailable: Bool { Downloader.findFfmpeg() != nil }
 
@@ -107,26 +148,78 @@ final class AppState: ObservableObject {
                 id: id,
                 name: screen.isBuiltIn ? L("MacBook-Display") : screen.localizedName,
                 isBuiltIn: screen.isBuiltIn,
-                pixelSize: CGSize(width: screen.frame.width * scale, height: screen.frame.height * scale)
+                pixelSize: CGSize(width: screen.frame.width * scale, height: screen.frame.height * scale),
+                frame: screen.frame
             )
         }
         .sorted { $0.isBuiltIn && !$1.isBuiltIn }
     }
 
     func assignment(for screenID: String) -> UUID? {
+        if isRotating(screenID) { return rotatingVideo(for: screenID) }
+        return fixedAssignment(for: screenID)
+    }
+
+    func fixedAssignment(for screenID: String) -> UUID? {
         guard let id = settings.assignments[screenID],
               library.contains(where: { $0.id == id }) else { return nil }
         return id
     }
 
+    func isRotating(_ screenID: String) -> Bool {
+        settings.rotatingScreens.contains(screenID) && !library.isEmpty
+    }
+
+    private func rotatingVideo(for screenID: String) -> UUID? {
+        guard !library.isEmpty else { return nil }
+        let interval = Double(max(1, settings.rotationMinutes) * 60)
+        let step = Int(Date().timeIntervalSince1970 / interval)
+        let offset = screens.firstIndex { $0.id == screenID } ?? 0
+        return library[(step + offset) % library.count].id
+    }
+
     func assign(_ videoID: UUID?, to screenID: String) {
-        settings.assignments[screenID] = videoID
+        var s = settings
+        s.assignments[screenID] = videoID
+        s.rotatingScreens.removeAll { $0 == screenID }
+        settings = s
+    }
+
+    func setRotating(_ rotating: Bool, for screenID: String) {
+        var s = settings
+        s.rotatingScreens.removeAll { $0 == screenID }
+        if rotating { s.rotatingScreens.append(screenID) }
+        settings = s
     }
 
     func assignToAll(_ videoID: UUID?) {
         var s = settings
         for screen in screens { s.assignments[screen.id] = videoID }
+        s.rotatingScreens = []
         settings = s
+    }
+
+    func rotateAll() {
+        settings.rotatingScreens = screens.map(\.id)
+    }
+
+    private var rotationTimer: Timer?
+
+    private func scheduleRotation() {
+        rotationTimer?.invalidate()
+        rotationTimer = nil
+        guard screens.contains(where: { isRotating($0.id) }), library.count > 1 else { return }
+        let interval = Double(max(1, settings.rotationMinutes) * 60)
+        let now = Date().timeIntervalSince1970
+        let next = Date(timeIntervalSince1970: (floor(now / interval) + 1) * interval + 0.5)
+        let timer = Timer(fire: next, interval: 0, repeats: false) { [weak self] _ in
+            MainActor.assumeIsolated {
+                self?.objectWillChange.send()
+                self?.applyAll()
+            }
+        }
+        RunLoop.main.add(timer, forMode: .common)
+        rotationTimer = timer
     }
 
     func options(for screenID: String) -> ScreenOptions {
@@ -156,12 +249,14 @@ final class AppState: ObservableObject {
 
     func applyAll() {
         var desired: [String: URL] = [:]
-        for (screenID, videoID) in settings.assignments {
-            if let item = library.first(where: { $0.id == videoID }) {
+        let screenIDs = Set(settings.assignments.keys).union(settings.rotatingScreens)
+        for screenID in screenIDs {
+            if let videoID = assignment(for: screenID), let item = library.first(where: { $0.id == videoID }) {
                 let eco = settings.powerSaving ? item.ecoURL : nil
                 desired[screenID] = eco ?? item.fileURL
             }
         }
+        scheduleRotation()
         pauseReason = currentPauseReason()
         engine.screensWithStrips = Set(settings.screenOptions.filter { $0.value.hideMenuBar || $0.value.hideDock }.keys)
         engine.apply(desired: desired, playbackAllowed: pauseReason == nil)

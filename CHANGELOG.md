@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.7 – November 16, 2026
+
+- Displays now show up as a little map, arranged just like your real setup. Click one to set it up.
+- Let a display rotate through all your videos, every 10 minutes up to every 2 hours. More variety, even less burn-in.
+- The library is now a grid with bigger previews.
+- Settings moved behind a gear icon to keep things tidy.
+- Proledo lets you know when a new version is out.
+- Proledo is now MIT licensed.
+
 ## 0.6 – November 16, 2026
 
 - Deleting a video now moves it to the Trash under its own name, so nothing is gone for good by accident.
