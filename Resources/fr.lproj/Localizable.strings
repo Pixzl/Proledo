@@ -50,8 +50,8 @@
 "Video hinzufügen" = "Ajouter une vidéo";
 "Video wird vorbereitet…" = "Préparation de la vidéo…";
 "YouTube-Link einfügen" = "Colle un lien YouTube";
-"Abbrechen" = "Annuler";
 "Link aus der Zwischenablage einfügen und prüfen" = "Coller le lien du presse-papiers et le vérifier";
+"Abbrechen" = "Annuler";
 "Weiter" = "Suivant";
 "Video-Infos werden geladen…" = "Chargement des infos de la vidéo…";
 "yt-dlp fehlt. Installieren mit: brew install yt-dlp" = "yt-dlp est manquant. Installe-le avec : brew install yt-dlp";

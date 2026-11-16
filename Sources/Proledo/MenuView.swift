@@ -27,6 +27,42 @@ struct MenuView: View {
     }
 }
 
+struct PillButtonStyle: ButtonStyle {
+    var prominent = false
+    var compact = false
+
+    func makeBody(configuration: Configuration) -> some View {
+        PillBody(configuration: configuration, prominent: prominent, compact: compact)
+    }
+
+    private struct PillBody: View {
+        let configuration: ButtonStyleConfiguration
+        let prominent: Bool
+        let compact: Bool
+        @Environment(\.isEnabled) private var isEnabled
+        @State private var hovering = false
+
+        var body: some View {
+            configuration.label
+                .font(compact ? .caption.weight(.medium) : .callout.weight(prominent ? .semibold : .medium))
+                .padding(.horizontal, compact ? 10 : 14)
+                .padding(.vertical, compact ? 4 : 6)
+                .foregroundStyle(prominent ? Color.white : Color.primary)
+                .background(
+                    Capsule().fill(prominent
+                        ? Color.accentColor.opacity(hovering ? 0.88 : 1)
+                        : Color.primary.opacity(hovering ? 0.13 : 0.08))
+                )
+                .scaleEffect(configuration.isPressed ? 0.97 : 1)
+                .opacity(isEnabled ? 1 : 0.4)
+                .contentShape(Capsule())
+                .onHover { hovering = $0 && isEnabled }
+                .animation(.easeOut(duration: 0.12), value: hovering)
+                .animation(.easeOut(duration: 0.08), value: configuration.isPressed)
+        }
+    }
+}
+
 private struct Card<Content: View, Trailing: View>: View {
     let title: String
     @ViewBuilder var trailing: Trailing
@@ -190,6 +226,7 @@ private struct HeaderView: View {
 private struct AddVideoCard: View {
     @EnvironmentObject private var state: AppState
     @State private var urlText = ""
+    @FocusState private var linkFocused: Bool
 
     var body: some View {
         Card(title: L("Video hinzufügen")) {
@@ -211,38 +248,83 @@ private struct AddVideoCard: View {
 
     private var isLoading: Bool { state.phase == .loadingInfo }
 
+    private var canGo: Bool {
+        !urlText.trimmingCharacters(in: .whitespaces).isEmpty && !isLoading
+    }
+
     @ViewBuilder
     private var linkField: some View {
-        HStack(spacing: 6) {
-            HStack(spacing: 6) {
-                Image(systemName: "link").foregroundStyle(.secondary)
+        HStack(spacing: 8) {
+            HStack(spacing: 7) {
+                Image(systemName: "link")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(.secondary)
                 TextField(L("YouTube-Link einfügen"), text: $urlText)
                     .textFieldStyle(.plain)
-                    .onSubmit { state.loadInfo(urlText) }
+                    .focused($linkFocused)
+                    .onSubmit { if canGo { state.loadInfo(urlText) } }
                     .disabled(isLoading)
-            }
-            .padding(.horizontal, 8)
-            .padding(.vertical, 6)
-            .background(RoundedRectangle(cornerRadius: 7).fill(Color.primary.opacity(0.06)))
-
-            if isLoading {
-                ProgressView().controlSize(.small).frame(width: 28)
-                Button(L("Abbrechen")) { state.cancelAdd() }
-            } else {
-                Button {
-                    if let s = NSPasteboard.general.string(forType: .string) {
-                        urlText = s.trimmingCharacters(in: .whitespacesAndNewlines)
-                        state.loadInfo(urlText)
+                if !isLoading {
+                    if urlText.isEmpty {
+                        Button {
+                            if let text = NSPasteboard.general.string(forType: .string) {
+                                urlText = text.trimmingCharacters(in: .whitespacesAndNewlines)
+                                state.loadInfo(urlText)
+                            }
+                        } label: {
+                            Image(systemName: "doc.on.clipboard")
+                                .font(.system(size: 12, weight: .medium))
+                                .foregroundStyle(.secondary)
+                                .frame(width: 22, height: 22)
+                                .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                        .help(L("Link aus der Zwischenablage einfügen und prüfen"))
+                    } else {
+                        Button {
+                            urlText = ""
+                        } label: {
+                            Image(systemName: "xmark.circle.fill")
+                                .foregroundStyle(.tertiary)
+                                .frame(width: 22, height: 22)
+                                .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
                     }
-                } label: {
-                    Image(systemName: "doc.on.clipboard")
                 }
-                .help(L("Link aus der Zwischenablage einfügen und prüfen"))
-
-                Button(L("Weiter")) { state.loadInfo(urlText) }
-                    .keyboardShortcut(.defaultAction)
-                    .disabled(urlText.trimmingCharacters(in: .whitespaces).isEmpty)
             }
+            .padding(.leading, 10)
+            .padding(.trailing, 5)
+            .padding(.vertical, 5)
+            .background(RoundedRectangle(cornerRadius: 10, style: .continuous).fill(Color.primary.opacity(0.06)))
+            .overlay(
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .strokeBorder(linkFocused ? Color.accentColor.opacity(0.7) : Color.primary.opacity(0.08),
+                                  lineWidth: linkFocused ? 1.5 : 1)
+            )
+            .animation(.easeOut(duration: 0.15), value: linkFocused)
+
+            Button {
+                if isLoading { state.cancelAdd() } else { state.loadInfo(urlText) }
+            } label: {
+                ZStack {
+                    Circle().fill(canGo || isLoading ? Color.accentColor : Color.primary.opacity(0.1))
+                    if isLoading {
+                        ProgressView().controlSize(.small).tint(.white)
+                    } else {
+                        Image(systemName: "arrow.right")
+                            .font(.system(size: 13, weight: .bold))
+                            .foregroundStyle(canGo ? Color.white : Color.secondary)
+                    }
+                }
+                .frame(width: 32, height: 32)
+                .contentShape(Circle())
+            }
+            .buttonStyle(.plain)
+            .keyboardShortcut(.defaultAction)
+            .disabled(!canGo && !isLoading)
+            .help(isLoading ? L("Abbrechen") : L("Weiter"))
+            .animation(.easeOut(duration: 0.15), value: canGo)
         }
 
         if isLoading {
@@ -410,12 +492,13 @@ private struct ReadyView: View {
                 }
                 Spacer()
                 Button(L("Abbrechen")) { state.cancelAdd() }
+                    .buttonStyle(PillButtonStyle())
                 Button {
                     state.startDownload(info)
                 } label: {
-                    Label(L("Laden"), systemImage: "arrow.down.circle.fill")
+                    Label(L("Laden"), systemImage: "arrow.down")
                 }
-                .buttonStyle(.borderedProminent)
+                .buttonStyle(PillButtonStyle(prominent: true))
                 .keyboardShortcut(.defaultAction)
                 .disabled(check.error != nil || needsFfmpeg)
             }
@@ -551,12 +634,13 @@ private struct GeneratorCard: View {
             HStack {
                 Spacer()
                 Button(L("Abbrechen")) { state.closeGenerator() }
+                    .buttonStyle(PillButtonStyle())
                 Button {
                     state.startGeneration()
                 } label: {
                     Label(L("Erzeugen"), systemImage: "sparkles")
                 }
-                .buttonStyle(.borderedProminent)
+                .buttonStyle(PillButtonStyle(prominent: true))
             }
         }
     }
@@ -588,7 +672,7 @@ private struct GeneratorCard: View {
                 }
                 Spacer()
                 Button(L("Abbrechen")) { state.cancelGeneration() }
-                    .controlSize(.small)
+                    .buttonStyle(PillButtonStyle(compact: true))
             }
         }
     }
@@ -1082,7 +1166,7 @@ private struct FooterView: View {
                 .help(L("Einstellungen"))
                 Button(L("Beenden")) { NSApp.terminate(nil) }
                     .keyboardShortcut("q")
-                    .controlSize(.small)
+                    .buttonStyle(PillButtonStyle(compact: true))
             }
         }
         .padding(.horizontal, 4)

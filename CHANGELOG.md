@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.7.1 – November 16, 2026
+
+- Nicer buttons: the link field has the paste button built in and a round arrow to continue, and all other buttons share the same rounded look.
+
 ## 0.7 – November 16, 2026
 
 - Displays now show up as a little map, arranged just like your real setup. Click one to set it up.
