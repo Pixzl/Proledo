@@ -63,6 +63,63 @@ struct PillButtonStyle: ButtonStyle {
     }
 }
 
+private struct ActionTile: View {
+    let icon: String
+    let colors: [Color]
+    let title: String
+    let subtitle: String
+    let action: () -> Void
+    @State private var hovering = false
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 9) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 7, style: .continuous)
+                        .fill(LinearGradient(colors: colors, startPoint: .topLeading, endPoint: .bottomTrailing))
+                    Image(systemName: icon)
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(.white)
+                }
+                .frame(width: 28, height: 28)
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(title)
+                        .font(.callout.weight(.medium))
+                        .foregroundStyle(.primary)
+                        .lineLimit(1)
+                    Text(subtitle)
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                }
+                Spacer(minLength: 0)
+            }
+            .padding(8)
+            .frame(maxWidth: .infinity)
+            .background(
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .fill(Color.primary.opacity(hovering ? 0.09 : 0.05))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .strokeBorder(Color.primary.opacity(hovering ? 0.14 : 0.07))
+            )
+            .contentShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+        }
+        .buttonStyle(PressableStyle())
+        .onHover { hovering = $0 }
+        .animation(.easeOut(duration: 0.12), value: hovering)
+    }
+}
+
+private struct PressableStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? 0.97 : 1)
+            .animation(.easeOut(duration: 0.08), value: configuration.isPressed)
+    }
+}
+
 private struct Card<Content: View, Trailing: View>: View {
     let title: String
     @ViewBuilder var trailing: Trailing
@@ -337,24 +394,29 @@ private struct AddVideoCard: View {
                      icon: "exclamationmark.triangle.fill")
         }
 
-        HStack(spacing: 14) {
-            Button {
+        HStack(spacing: 8) {
+            ActionTile(icon: "folder.fill",
+                       colors: [Color(red: 0.25, green: 0.55, blue: 1.0), Color(red: 0.15, green: 0.4, blue: 0.95)],
+                       title: L("Eigene Datei"),
+                       subtitle: L("Vom Mac")) {
                 state.importLocalFile()
-            } label: {
-                Label(L("Eigene Videodatei wählen…"), systemImage: "folder")
             }
-            Button {
-                state.openGenerator()
-            } label: {
-                if let progress = state.generatorProgress {
-                    Label(String(format: L("Wird erzeugt · %d %%"), Int(progress * 100)), systemImage: "sparkles")
-                } else {
-                    Label(L("Hintergrund erzeugen…"), systemImage: "sparkles")
+            if let progress = state.generatorProgress {
+                ActionTile(icon: "sparkles",
+                           colors: [Color(red: 0.55, green: 0.38, blue: 1.0), Color(red: 0.95, green: 0.4, blue: 0.7)],
+                           title: L("Wird erzeugt"),
+                           subtitle: "\(Int(progress * 100)) %") {
+                    state.openGenerator()
+                }
+            } else {
+                ActionTile(icon: "sparkles",
+                           colors: [Color(red: 0.55, green: 0.38, blue: 1.0), Color(red: 0.95, green: 0.4, blue: 0.7)],
+                           title: L("Selbst erzeugen"),
+                           subtitle: L("Höhenlinien-Loop")) {
+                    state.openGenerator()
                 }
             }
         }
-        .buttonStyle(.link)
-        .font(.caption)
     }
 
     private func progressView(title: String, fraction: Double?, bytes: Int64?) -> some View {

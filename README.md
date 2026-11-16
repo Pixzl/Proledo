@@ -1,6 +1,21 @@
-# Proledo
+<p align="center">
+  <img src="docs/icon.png" width="128" alt="Proledo icon">
+</p>
 
-Moving wallpapers for Macs with a PROLED or OLED display, so nothing burns in.
+<h1 align="center">Proledo</h1>
+
+<p align="center">
+  Moving wallpapers for Macs with a PROLED or OLED display, so nothing burns in.<br>
+  <a href="https://github.com/drieken/Proledo/releases/latest"><b>Download the latest release</b></a>
+</p>
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/menu-dark.png">
+    <img src="docs/menu-light.png" width="400" alt="The Proledo menu with a map of four displays and a video library">
+  </picture>
+  <img src="docs/generator.png" width="400" alt="Creating a contour line wallpaper in Proledo">
+</p>
 
 Made for the MacBook Pro with PROLED XDR display, works on any Mac and any external monitor. Proledo lives in your menu bar. Paste a YouTube link, the video gets saved locally and plays as your desktop background. Every monitor can have its own video, or none at all.
 
@@ -16,6 +31,14 @@ Made for the MacBook Pro with PROLED XDR display, works on any Mac and any exter
 - Works with your own video files too
 - Creates its own wallpapers: seamless contour line loops, sized for each display
 - Available in English, German, French and Spanish
+
+## Make your own
+
+Proledo can draw wallpapers for you: white contour lines slowly flowing over black, sized for the exact display you pick. They loop without a visible jump and have no watermark, so nothing on screen stays still.
+
+<p align="center">
+  <img src="docs/wallpaper.jpg" width="820" alt="A contour line wallpaper made by Proledo">
+</p>
 
 ## Install
 

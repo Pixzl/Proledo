@@ -55,9 +55,11 @@
 "Weiter" = "Siguiente";
 "Video-Infos werden geladen…" = "Cargando información del vídeo…";
 "yt-dlp fehlt. Installieren mit: brew install yt-dlp" = "Falta yt-dlp. Instálalo con: brew install yt-dlp";
-"Eigene Videodatei wählen…" = "Elegir un archivo de vídeo…";
-"Wird erzeugt · %d %%" = "Creando · %d %%";
-"Hintergrund erzeugen…" = "Crear fondo…";
+"Eigene Datei" = "Tu archivo";
+"Vom Mac" = "Desde tu Mac";
+"Wird erzeugt" = "Creando";
+"Selbst erzeugen" = "Crear el tuyo";
+"Höhenlinien-Loop" = "Curvas en bucle";
 "Download abbrechen" = "Cancelar descarga";
 "%@ von ≈ %@" = "%@ de ≈ %@";
 "Ausschnitt wird geladen und geschnitten" = "Descargando y recortando el fragmento";

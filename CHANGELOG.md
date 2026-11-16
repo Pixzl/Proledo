@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.7.2 – November 16, 2026
+
+- Adding your own file or making a wallpaper now has two proper tiles instead of small text links.
+- The README finally has pictures.
+
 ## 0.7.1 – November 16, 2026
 
 - Nicer buttons: the link field has the paste button built in and a round arrow to continue, and all other buttons share the same rounded look.

@@ -166,6 +166,13 @@ T = {
     "Wechsel alle": ("Switch every", "Changer toutes les", "Cambiar cada"),
     "Abwechselnd · %@": ("Rotating · %@", "Alternance · %@", "Alternando · %@"),
     "Einstellungen": ("Settings", "Réglages", "Ajustes"),
+    "Eigene Datei": ("Your own file", "Ton fichier", "Tu archivo"),
+    "Video von deinem Mac": ("A video from your Mac", "Une vidéo de ton Mac", "Un vídeo de tu Mac"),
+    "Selbst erzeugen": ("Make your own", "Créer le tien", "Crear el tuyo"),
+    "Höhenlinien als Loop": ("Contour lines on a loop", "Courbes de niveau en boucle", "Curvas de nivel en bucle"),
+    "Wird erzeugt": ("Creating", "Création", "Creando"),
+    "Vom Mac": ("From your Mac", "Depuis ton Mac", "Desde tu Mac"),
+    "Höhenlinien-Loop": ("Contour line loop", "Courbes en boucle", "Curvas en bucle"),
 }
 
 root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
