@@ -1,8 +1,8 @@
 # Proledo
 
-Moving wallpapers for Macs with an OLED display, so nothing burns in.
+Moving wallpapers for Macs with a PROLED or OLED display, so nothing burns in.
 
-Proledo lives in your menu bar. Paste a YouTube link, the video gets saved locally and plays as your desktop background. Every monitor can have its own video, or none at all.
+Made for the MacBook Pro with PROLED XDR display, works on any Mac and any external monitor. Proledo lives in your menu bar. Paste a YouTube link, the video gets saved locally and plays as your desktop background. Every monitor can have its own video, or none at all.
 
 ## What it does
 
@@ -13,6 +13,16 @@ Proledo lives in your menu bar. Paste a YouTube link, the video gets saved local
 - Pauses on its own when the desktop is covered, the Mac is locked or running on battery
 - Never keeps your screen awake
 - Works with your own video files too
+
+## Install
+
+Grab `Proledo.zip` from the [latest release](https://github.com/drieken/Proledo/releases/latest), unzip it and move Proledo to your Applications folder.
+
+The app isn't notarized yet, so macOS blocks it on first launch. Right-click it and choose **Open**, or run:
+
+```bash
+xattr -dr com.apple.quarantine /Applications/Proledo.app
+```
 
 ## Requirements
 
