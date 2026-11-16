@@ -1,38 +1,38 @@
 # Proledo
 
-Bewegte Hintergründe für Macs mit OLED-Display, damit sich nichts einbrennt.
+Moving wallpapers for Macs with an OLED display, so nothing burns in.
 
-Proledo sitzt in der Menüleiste. Du gibst einen YouTube-Link ein, das Video wird lokal gespeichert und läuft als Hintergrund auf dem Schreibtisch. Für jeden Monitor kannst du ein eigenes Video wählen oder ihn auslassen.
+Proledo lives in your menu bar. Paste a YouTube link, the video gets saved locally and plays as your desktop background. Every monitor can have its own video, or none at all.
 
-## Was die App kann
+## What it does
 
-- YouTube-Videos ohne Ton laden, in der Qualität deiner Wahl
-- Bei langen Videos nur einen Ausschnitt laden, zum Beispiel 10 Minuten aus einem 12-Stunden-Video
-- Pro Monitor ein eigenes Video, auch hochkant
-- Menüleiste und Dock pro Monitor ausblenden, sie kommen zurück, sobald die Maus an den Rand fährt
-- Pausiert von selbst, wenn der Schreibtisch verdeckt ist, der Mac gesperrt ist oder im Akkubetrieb läuft
-- Hält den Bildschirm nie wach
-- Eigene Videodateien gehen auch
+- Downloads YouTube videos without sound, in the quality you pick
+- Grabs just a slice of long videos, like 10 minutes out of a 12-hour one
+- Lets you choose a video per monitor, portrait screens included
+- Hides the menu bar and Dock per monitor, they come back when your mouse hits the edge
+- Pauses on its own when the desktop is covered, the Mac is locked or running on battery
+- Never keeps your screen awake
+- Works with your own video files too
 
-## Voraussetzungen
+## Requirements
 
-- macOS 14 oder neuer
-- [yt-dlp](https://github.com/yt-dlp/yt-dlp) für YouTube-Downloads
-- [ffmpeg](https://ffmpeg.org) für Ausschnitte
+- macOS 14 or later
+- [yt-dlp](https://github.com/yt-dlp/yt-dlp) for YouTube downloads
+- [ffmpeg](https://ffmpeg.org) for clips
 
 ```bash
 brew install yt-dlp ffmpeg
 ```
 
-## Bauen
+## Build
 
 ```bash
 ./build.sh
 open build/Proledo.app
 ```
 
-Das Icon lässt sich mit `swift Tools/make-icon.swift <Ordner>.iconset` neu erzeugen und mit `iconutil` in `Resources/Proledo.icns` umwandeln.
+To redraw the icon, run `swift Tools/make-icon.swift <folder>.iconset` and turn it into `Resources/Proledo.icns` with `iconutil`.
 
-## Hinweis
+## Note
 
-Lade nur Videos herunter, die du nutzen darfst. Die Nutzungsbedingungen von YouTube schränken Downloads ein.
+Only download videos you're allowed to use. YouTube's terms of service restrict downloads.
