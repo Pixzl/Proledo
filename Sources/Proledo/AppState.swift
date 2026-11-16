@@ -68,6 +68,7 @@ final class AppState: ObservableObject {
     }
 
     func stop() {
+        generatorCancel.set()
         downloader.cancel()
         downloader.cancelInfo()
         engine.tearDown()
@@ -86,12 +87,12 @@ final class AppState: ObservableObject {
             }
             launchAtLoginHint = nil
         } catch {
-            launchAtLoginHint = "Autostart ging nicht: \(error.localizedDescription)"
+            launchAtLoginHint = String(format: L("Autostart ging nicht: %@"), error.localizedDescription)
         }
         let status = SMAppService.mainApp.status
         launchAtLogin = status == .enabled
         if status == .requiresApproval {
-            launchAtLoginHint = "Bitte in Systemeinstellungen › Allgemein › Anmeldeobjekte erlauben."
+            launchAtLoginHint = L("Bitte in Systemeinstellungen › Allgemein › Anmeldeobjekte erlauben.")
         }
     }
 
@@ -104,7 +105,7 @@ final class AppState: ObservableObject {
             let scale = screen.backingScaleFactor
             return ScreenInfo(
                 id: id,
-                name: screen.isBuiltIn ? "MacBook-Display" : screen.localizedName,
+                name: screen.isBuiltIn ? L("MacBook-Display") : screen.localizedName,
                 isBuiltIn: screen.isBuiltIn,
                 pixelSize: CGSize(width: screen.frame.width * scale, height: screen.frame.height * scale)
             )
@@ -145,11 +146,11 @@ final class AppState: ObservableObject {
     }
 
     private func currentPauseReason() -> String? {
-        if settings.userPaused { return "Pausiert" }
-        if power.screensAsleep { return "Bildschirm aus" }
-        if power.locked { return "Gesperrt" }
-        if settings.pauseOnBattery && power.onBattery { return "Pausiert im Akkubetrieb" }
-        if power.lowPower { return "Pausiert im Energiesparmodus" }
+        if settings.userPaused { return L("Pausiert") }
+        if power.screensAsleep { return L("Bildschirm aus") }
+        if power.locked { return L("Gesperrt") }
+        if settings.pauseOnBattery && power.onBattery { return L("Pausiert im Akkubetrieb") }
+        if power.lowPower { return L("Pausiert im Energiesparmodus") }
         return nil
     }
 
@@ -174,7 +175,7 @@ final class AppState: ObservableObject {
     func loadInfo(_ raw: String) {
         let text = raw.trimmingCharacters(in: .whitespacesAndNewlines)
         guard let url = URL(string: text), let scheme = url.scheme, scheme.hasPrefix("http"), url.host != nil else {
-            phase = .failed("Das ist kein gültiger Link.")
+            phase = .failed(L("Das ist kein gültiger Link."))
             return
         }
         phase = .loadingInfo
@@ -217,14 +218,14 @@ final class AppState: ObservableObject {
     func validatedRange(for info: VideoInfo) -> (range: ClosedRange<Double>?, error: String?) {
         guard draft.useRange else { return (nil, nil) }
         guard let from = Format.parseTime(draft.from), let rawTo = Format.parseTime(draft.to) else {
-            return (nil, "Zeiten bitte als m:ss oder h:mm:ss eingeben.")
+            return (nil, L("Zeiten bitte als m:ss oder h:mm:ss eingeben."))
         }
         let to = info.duration.map { min(rawTo, $0) } ?? rawTo
         if let duration = info.duration, from >= duration {
-            return (nil, "Der Anfang liegt hinter dem Videoende (\(Format.duration(duration))).")
+            return (nil, String(format: L("Der Anfang liegt hinter dem Videoende (%@)."), Format.duration(duration)))
         }
-        if to <= from { return (nil, "Das Ende muss nach dem Anfang liegen.") }
-        if to - from < 3 { return (nil, "Der Ausschnitt sollte mindestens 3 Sekunden lang sein.") }
+        if to <= from { return (nil, L("Das Ende muss nach dem Anfang liegen.")) }
+        if to - from < 3 { return (nil, L("Der Ausschnitt sollte mindestens 3 Sekunden lang sein.")) }
         return (from...to, nil)
     }
 
@@ -278,7 +279,7 @@ final class AppState: ObservableObject {
         let panel = NSOpenPanel()
         panel.allowedContentTypes = [.movie]
         panel.allowsMultipleSelection = false
-        panel.message = "Video als Hintergrund wählen"
+        panel.message = L("Video als Hintergrund wählen")
         NSApp.activate(ignoringOtherApps: true)
         guard panel.runModal() == .OK, let source = panel.url else { return }
 
@@ -288,7 +289,7 @@ final class AppState: ObservableObject {
         do {
             try FileManager.default.copyItem(at: source, to: target)
         } catch {
-            phase = .failed("Kopieren fehlgeschlagen: \(error.localizedDescription)")
+            phase = .failed(String(format: L("Kopieren fehlgeschlagen: %@"), error.localizedDescription))
             return
         }
         Task {
@@ -297,25 +298,28 @@ final class AppState: ObservableObject {
         }
     }
 
-    private func addToLibrary(id: UUID, file: URL, title: String, source: String?) async {
+    @discardableResult
+    private func addToLibrary(id: UUID, file: URL, title: String, source: String?,
+                              generated: Bool = false, updatesPhase: Bool = true) async -> Bool {
         let asset = AVURLAsset(url: file)
         let playable = (try? await asset.load(.isPlayable)) ?? false
         guard playable else {
             try? FileManager.default.removeItem(at: file)
-            phase = .failed("Dieses Videoformat kann der Mac nicht abspielen.")
-            return
+            if updatesPhase { phase = .failed(L("Dieses Videoformat kann der Mac nicht abspielen.")) }
+            return false
         }
         let duration = (try? await asset.load(.duration)).map(\.seconds).flatMap { $0.isFinite ? $0 : nil }
         let size = (try? FileManager.default.attributesOfItem(atPath: file.path)[.size] as? NSNumber)?.int64Value
 
-        let item = VideoItem(id: id, title: title, sourceURL: source, fileName: file.lastPathComponent,
+        var item = VideoItem(id: id, title: title, sourceURL: source, fileName: file.lastPathComponent,
                              addedAt: Date(), duration: duration, fileSize: size)
+        if generated { item.generated = true }
         if let image = await Self.makeThumbnail(asset: asset, duration: duration ?? 0, to: item.thumbnailURL) {
             thumbnails[id] = image
         }
         library.append(item)
         Storage.save(library, to: Storage.libraryFile)
-        phase = .idle
+        if updatesPhase { phase = .idle }
         processEcoQueue()
 
         if settings.assignments.isEmpty, let target = screens.first(where: \.isBuiltIn) ?? screens.first {
@@ -323,6 +327,109 @@ final class AppState: ObservableObject {
         } else {
             applyAll()
         }
+        return true
+    }
+
+    @Published var generatorOpen = false
+    @Published var generatorOptions = TopoOptions()
+    @Published var generatorScreenID: String?
+    @Published private(set) var generatorPreview: NSImage?
+    @Published private(set) var generatorProgress: Double?
+    @Published private(set) var generatorStartedAt = Date()
+    @Published private(set) var generatorError: String?
+    private var previewTask: Task<Void, Never>?
+    private var generateTask: Task<Void, Never>?
+    private let generatorCancel = CancelFlag()
+
+    var generatorScreen: ScreenInfo? {
+        screens.first { $0.id == generatorScreenID } ?? screens.first
+    }
+
+    func generatorSize(for screen: ScreenInfo) -> (width: Int, height: Int) {
+        let cap: CGFloat = settings.powerSaving ? 1440 : 2160
+        let w = screen.pixelSize.width, h = screen.pixelSize.height
+        let factor = min(1, cap / min(w, h))
+        func even(_ v: CGFloat) -> Int { Int((v * factor / 2).rounded()) * 2 }
+        return (even(w), even(h))
+    }
+
+    func openGenerator() {
+        if generatorScreenID == nil || !screens.contains(where: { $0.id == generatorScreenID }) {
+            generatorScreenID = (screens.first { assignment(for: $0.id) == nil } ?? screens.first)?.id
+        }
+        generatorError = nil
+        generatorOpen = true
+        refreshGeneratorPreview()
+    }
+
+    func closeGenerator() {
+        guard generatorProgress == nil else { return }
+        generatorOpen = false
+        generatorPreview = nil
+    }
+
+    func shuffleGeneratorPattern() {
+        generatorOptions.seed = TopoOptions.randomSeed()
+    }
+
+    func refreshGeneratorPreview() {
+        guard generatorOpen, let screen = generatorScreen else { return }
+        let ratio = screen.pixelSize.width / max(screen.pixelSize.height, 1)
+        let short: CGFloat = 300
+        let size = ratio >= 1 ? (Int(short * ratio), Int(short)) : (Int(short), Int(short / ratio))
+        let options = generatorOptions
+        previewTask?.cancel()
+        previewTask = Task { [weak self] in
+            try? await Task.sleep(nanoseconds: 120_000_000)
+            guard !Task.isCancelled else { return }
+            let image = await Task.detached(priority: .userInitiated) {
+                TopoGenerator(width: size.0, height: size.1, options: options).still(at: 0.2)
+            }.value
+            guard !Task.isCancelled, let self, let image else { return }
+            self.generatorPreview = NSImage(cgImage: image, size: NSSize(width: image.width, height: image.height))
+        }
+    }
+
+    func startGeneration() {
+        guard generatorProgress == nil, let screen = generatorScreen else { return }
+        let size = generatorSize(for: screen)
+        let options = generatorOptions
+        let id = UUID()
+        let target = Storage.videosDir.appendingPathComponent("\(id.uuidString).mp4")
+        let title = String(format: L("Höhenlinien · %@"), screen.name)
+        generatorError = nil
+        generatorProgress = 0
+        generatorStartedAt = Date()
+        generatorCancel.reset()
+        let cancel = generatorCancel
+
+        generateTask = Task { [weak self] in
+            let ok = await Task.detached(priority: .utility) {
+                TopoGenerator(width: size.width, height: size.height, options: options).renderVideo(
+                    to: target,
+                    progress: { value in Task { @MainActor in self?.generatorProgress = value } },
+                    isCancelled: { cancel.isSet }
+                )
+            }.value
+            guard let self else { return }
+            if ok, await self.addToLibrary(id: id, file: target, title: title, source: nil,
+                                           generated: true, updatesPhase: false) {
+                self.assign(id, to: screen.id)
+                self.generatorProgress = nil
+                self.generatorOpen = false
+                self.generatorPreview = nil
+                self.generatorOptions.seed = TopoOptions.randomSeed()
+            } else {
+                try? FileManager.default.removeItem(at: target)
+                self.generatorProgress = nil
+                if !cancel.isSet { self.generatorError = L("Das Video konnte nicht erzeugt werden.") }
+            }
+            self.generateTask = nil
+        }
+    }
+
+    func cancelGeneration() {
+        generatorCancel.set()
     }
 
     private static func makeThumbnail(asset: AVURLAsset, duration: Double, to url: URL) async -> NSImage? {

@@ -14,6 +14,8 @@ Made for the MacBook Pro with PROLED XDR display, works on any Mac and any exter
 - Has a power saving mode that plays a lighter 30 fps copy of each video
 - Never keeps your screen awake
 - Works with your own video files too
+- Creates its own wallpapers: seamless contour line loops, sized for each display
+- Available in English, German, French and Spanish
 
 ## Install
 

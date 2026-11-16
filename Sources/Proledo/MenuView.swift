@@ -7,10 +7,14 @@ struct MenuView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             HeaderView()
-            AddVideoCard()
-            ScreensCard()
-            if !state.library.isEmpty {
-                LibraryCard()
+            if state.generatorOpen {
+                GeneratorCard()
+            } else {
+                AddVideoCard()
+                ScreensCard()
+                if !state.library.isEmpty {
+                    LibraryCard()
+                }
             }
             FooterView()
         }
@@ -107,8 +111,8 @@ private struct HeaderView: View {
     private var status: (text: String, color: Color) {
         if let reason = state.pauseReason { return (reason, .orange) }
         let count = state.activeScreenCount
-        if count == 0 { return ("Kein Video aktiv", .secondary) }
-        return (count == 1 ? "Läuft auf 1 Monitor" : "Läuft auf \(count) Monitoren", .green)
+        if count == 0 { return (L("Kein Video aktiv"), .secondary) }
+        return (count == 1 ? L("Läuft auf 1 Monitor") : String(format: L("Läuft auf %d Monitoren"), count), .green)
     }
 
     var body: some View {
@@ -136,7 +140,7 @@ private struct HeaderView: View {
                     .contentShape(Circle())
             }
             .buttonStyle(.plain)
-            .help(state.settings.userPaused ? "Wiedergabe fortsetzen" : "Wiedergabe pausieren")
+            .help(state.settings.userPaused ? L("Wiedergabe fortsetzen") : L("Wiedergabe pausieren"))
         }
         .padding(.horizontal, 2)
     }
@@ -147,7 +151,7 @@ private struct AddVideoCard: View {
     @State private var urlText = ""
 
     var body: some View {
-        Card(title: "Video hinzufügen") {
+        Card(title: L("Video hinzufügen")) {
             switch state.phase {
             case .idle, .failed, .loadingInfo:
                 linkField
@@ -158,7 +162,7 @@ private struct AddVideoCard: View {
             case .importing:
                 HStack(spacing: 8) {
                     ProgressView().controlSize(.small)
-                    Text("Video wird vorbereitet…").font(.callout).foregroundStyle(.secondary)
+                    Text(L("Video wird vorbereitet…")).font(.callout).foregroundStyle(.secondary)
                 }
             }
         }
@@ -171,7 +175,7 @@ private struct AddVideoCard: View {
         HStack(spacing: 6) {
             HStack(spacing: 6) {
                 Image(systemName: "link").foregroundStyle(.secondary)
-                TextField("YouTube-Link einfügen", text: $urlText)
+                TextField(L("YouTube-Link einfügen"), text: $urlText)
                     .textFieldStyle(.plain)
                     .onSubmit { state.loadInfo(urlText) }
                     .disabled(isLoading)
@@ -182,7 +186,7 @@ private struct AddVideoCard: View {
 
             if isLoading {
                 ProgressView().controlSize(.small).frame(width: 28)
-                Button("Abbrechen") { state.cancelAdd() }
+                Button(L("Abbrechen")) { state.cancelAdd() }
             } else {
                 Button {
                     if let s = NSPasteboard.general.string(forType: .string) {
@@ -192,28 +196,36 @@ private struct AddVideoCard: View {
                 } label: {
                     Image(systemName: "doc.on.clipboard")
                 }
-                .help("Link aus der Zwischenablage einfügen und prüfen")
+                .help(L("Link aus der Zwischenablage einfügen und prüfen"))
 
-                Button("Weiter") { state.loadInfo(urlText) }
+                Button(L("Weiter")) { state.loadInfo(urlText) }
                     .keyboardShortcut(.defaultAction)
                     .disabled(urlText.trimmingCharacters(in: .whitespaces).isEmpty)
             }
         }
 
         if isLoading {
-            HintText(text: "Video-Infos werden geladen…")
+            HintText(text: L("Video-Infos werden geladen…"))
         } else if case .failed(let message) = state.phase {
             HintText(text: message, color: .red, icon: "exclamationmark.triangle.fill")
         }
         if !state.ytDlpAvailable {
-            HintText(text: "yt-dlp fehlt. Installieren mit: brew install yt-dlp", color: .orange,
+            HintText(text: L("yt-dlp fehlt. Installieren mit: brew install yt-dlp"), color: .orange,
                      icon: "exclamationmark.triangle.fill")
         }
 
-        Button {
-            state.importLocalFile()
-        } label: {
-            Label("Eigene Videodatei wählen…", systemImage: "folder")
+        HStack(spacing: 14) {
+            Button {
+                state.importLocalFile()
+            } label: {
+                Label(L("Eigene Videodatei wählen…"), systemImage: "folder")
+            }
+            Button {
+                state.openGenerator()
+            } label: {
+                Label(L("Hintergrund erzeugen…"), systemImage: "sparkles")
+            }
+            .disabled(state.generatorOpen)
         }
         .buttonStyle(.link)
         .font(.caption)
@@ -230,7 +242,7 @@ private struct AddVideoCard: View {
                     Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary)
                 }
                 .buttonStyle(.plain)
-                .help("Download abbrechen")
+                .help(L("Download abbrechen"))
             }
             if let fraction {
                 ProgressView(value: fraction)
@@ -250,14 +262,14 @@ private struct AddVideoCard: View {
         if let fraction { parts.append("\(Int(fraction * 100)) %") }
         if let bytes, bytes > 0 {
             if state.downloadIsClip, let estimate = state.downloadEstimate {
-                parts.append("\(Format.bytes(bytes)) von ≈ \(Format.bytes(estimate))")
+                parts.append(String(format: L("%@ von ≈ %@"), Format.bytes(bytes), Format.bytes(estimate)))
             } else {
                 parts.append(Format.bytes(bytes))
             }
         }
         if parts.isEmpty {
             let elapsed = Format.duration(max(0, now.timeIntervalSince(state.downloadStartedAt)))
-            return (state.downloadIsClip ? "Ausschnitt wird geladen und geschnitten" : "Download startet") + " · \(elapsed)"
+            return (state.downloadIsClip ? L("Ausschnitt wird geladen und geschnitten") : L("Download startet")) + " · \(elapsed)"
         }
         return parts.joined(separator: " · ")
     }
@@ -293,10 +305,10 @@ private struct ReadyView: View {
             Divider()
 
             HStack {
-                Text("Qualität").font(.callout)
+                Text(L("Qualität")).font(.callout)
                 Spacer()
                 if info.qualities.isEmpty {
-                    Text("Automatisch").font(.callout).foregroundStyle(.secondary)
+                    Text(L("Automatisch")).font(.callout).foregroundStyle(.secondary)
                 } else {
                     Picker("", selection: $state.draft.qualityID) {
                         ForEach(info.qualities) { q in
@@ -310,37 +322,37 @@ private struct ReadyView: View {
 
             VStack(alignment: .leading, spacing: 8) {
                 Toggle(isOn: $state.draft.useRange) {
-                    Text("Nur einen Ausschnitt laden").font(.callout)
+                    Text(L("Nur einen Ausschnitt laden")).font(.callout)
                 }
                 .toggleStyle(.switch)
                 .controlSize(.small)
 
                 if state.draft.useRange {
                     HStack(spacing: 6) {
-                        Text("Von").font(.callout).foregroundStyle(.secondary)
+                        Text(L("Von")).font(.callout).foregroundStyle(.secondary)
                         timeField($state.draft.from)
-                        Text("bis").font(.callout).foregroundStyle(.secondary)
+                        Text(L("bis")).font(.callout).foregroundStyle(.secondary)
                         timeField($state.draft.to)
                         Spacer()
                         if let range = check.range {
                             Text("= \(Format.readableDuration(range.upperBound - range.lowerBound))")
                                 .font(.callout.monospacedDigit())
                                 .foregroundStyle(.secondary)
-                                .help("Länge des Ausschnitts")
+                                .help(L("Länge des Ausschnitts"))
                         }
                     }
                     if let error = check.error {
                         HintText(text: error, color: .red, icon: "exclamationmark.triangle.fill")
                     }
                     if needsFfmpeg {
-                        HintText(text: "Für Ausschnitte wird ffmpeg benötigt: brew install ffmpeg",
+                        HintText(text: L("Für Ausschnitte wird ffmpeg benötigt: brew install ffmpeg"),
                                  color: .orange, icon: "exclamationmark.triangle.fill")
                     }
                 }
             }
 
             if let estimate, estimate > 2_000_000_000 {
-                HintText(text: "Ziemlich groß. Ein kürzerer Ausschnitt oder eine kleinere Qualität spart Platz.",
+                HintText(text: L("Ziemlich groß. Ein kürzerer Ausschnitt oder eine kleinere Qualität spart Platz."),
                          color: .orange, icon: "externaldrive.badge.exclamationmark")
             }
 
@@ -353,11 +365,11 @@ private struct ReadyView: View {
                         .foregroundStyle(.secondary)
                 }
                 Spacer()
-                Button("Abbrechen") { state.cancelAdd() }
+                Button(L("Abbrechen")) { state.cancelAdd() }
                 Button {
                     state.startDownload(info)
                 } label: {
-                    Label("Laden", systemImage: "arrow.down.circle.fill")
+                    Label(L("Laden"), systemImage: "arrow.down.circle.fill")
                 }
                 .buttonStyle(.borderedProminent)
                 .keyboardShortcut(.defaultAction)
@@ -382,20 +394,185 @@ private struct ReadyView: View {
     }
 }
 
+private struct GeneratorCard: View {
+    @EnvironmentObject private var state: AppState
+
+    private var busy: Bool { state.generatorProgress != nil }
+
+    var body: some View {
+        Card(title: L("Hintergrund erzeugen")) {
+            Button {
+                state.closeGenerator()
+            } label: {
+                Image(systemName: "xmark").foregroundStyle(.secondary)
+            }
+            .buttonStyle(.borderless)
+            .disabled(busy)
+            .help(L("Schließen"))
+        } content: {
+            VStack(alignment: .leading, spacing: 10) {
+                preview
+                if let progress = state.generatorProgress {
+                    progressView(progress)
+                } else {
+                    controls
+                }
+            }
+        }
+        .onChange(of: state.generatorOptions) { _, _ in state.refreshGeneratorPreview() }
+        .onChange(of: state.generatorScreenID) { _, _ in state.refreshGeneratorPreview() }
+    }
+
+    private var preview: some View {
+        ZStack(alignment: .bottomTrailing) {
+            ZStack {
+                Color.black
+                if let image = state.generatorPreview {
+                    Image(nsImage: image)
+                        .resizable()
+                        .interpolation(.high)
+                        .aspectRatio(contentMode: .fit)
+                } else {
+                    ProgressView().controlSize(.small)
+                }
+            }
+            .frame(maxWidth: .infinity)
+            .frame(height: 150)
+            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+
+            if !busy {
+                Button {
+                    state.shuffleGeneratorPattern()
+                } label: {
+                    Label(L("Neues Muster"), systemImage: "shuffle")
+                        .font(.caption)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(Capsule().fill(.black.opacity(0.6)))
+                        .foregroundStyle(.white)
+                }
+                .buttonStyle(.plain)
+                .padding(8)
+            }
+        }
+    }
+
+    private var controls: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            row(L("Monitor")) {
+                Picker("", selection: $state.generatorScreenID) {
+                    ForEach(state.screens) { screen in
+                        Text(screen.name).tag(Optional(screen.id))
+                    }
+                }
+                .labelsHidden()
+            }
+            row(L("Dichte")) {
+                Picker("", selection: $state.generatorOptions.density) {
+                    ForEach(TopoOptions.Density.allCases) { Text(L($0.rawValue)).tag($0) }
+                }
+                .pickerStyle(.segmented)
+                .labelsHidden()
+            }
+            row(L("Tempo")) {
+                Picker("", selection: $state.generatorOptions.speed) {
+                    ForEach(TopoOptions.Speed.allCases) { Text(L($0.rawValue)).tag($0) }
+                }
+                .pickerStyle(.segmented)
+                .labelsHidden()
+            }
+            row(L("Linien")) {
+                Picker("", selection: $state.generatorOptions.lines) {
+                    ForEach(TopoOptions.Lines.allCases) { Text(L($0.rawValue)).tag($0) }
+                }
+                .pickerStyle(.segmented)
+                .labelsHidden()
+            }
+            row(L("Länge")) {
+                Picker("", selection: $state.generatorOptions.seconds) {
+                    ForEach([60, 120, 300], id: \.self) { Text(Format.readableDuration(Double($0))).tag($0) }
+                }
+                .pickerStyle(.segmented)
+                .labelsHidden()
+            }
+
+            if let screen = state.generatorScreen {
+                let size = state.generatorSize(for: screen)
+                HintText(text: String(format: L("%d × %d · nahtlose Schleife · ≈ %@"), size.width, size.height,
+                                      Format.bytes(estimatedBytes(size))))
+            }
+            if let error = state.generatorError {
+                HintText(text: error, color: .red, icon: "exclamationmark.triangle.fill")
+            }
+
+            HStack {
+                Spacer()
+                Button(L("Abbrechen")) { state.closeGenerator() }
+                Button {
+                    state.startGeneration()
+                } label: {
+                    Label(L("Erzeugen"), systemImage: "sparkles")
+                }
+                .buttonStyle(.borderedProminent)
+            }
+        }
+    }
+
+    private func row<Content: View>(_ title: String, @ViewBuilder content: () -> Content) -> some View {
+        HStack(spacing: 8) {
+            Text(title)
+                .font(.callout)
+                .foregroundStyle(.secondary)
+                .frame(width: 64, alignment: .leading)
+            content()
+        }
+    }
+
+    private func estimatedBytes(_ size: (width: Int, height: Int)) -> Int64 {
+        let scale = Double(min(size.width, size.height)) / 1440
+        let bitRate = 9_000_000 * pow(scale, 1.5)
+        return Int64(bitRate * Double(state.generatorOptions.seconds) / 8 * 0.95)
+    }
+
+    private func progressView(_ progress: Double) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            ProgressView(value: progress)
+            HStack {
+                TimelineView(.periodic(from: .now, by: 1)) { context in
+                    Text(progressText(progress, now: context.date))
+                        .font(.caption.monospacedDigit())
+                        .foregroundStyle(.secondary)
+                }
+                Spacer()
+                Button(L("Abbrechen")) { state.cancelGeneration() }
+                    .controlSize(.small)
+            }
+        }
+    }
+
+    private func progressText(_ progress: Double, now: Date) -> String {
+        let percent = "\(Int(progress * 100)) %"
+        guard progress > 0.03 else { return "\(percent) · " + L("wird berechnet…") }
+        let elapsed = now.timeIntervalSince(state.generatorStartedAt)
+        let remaining = max(0, elapsed / progress * (1 - progress))
+        return "\(percent) · " + String(format: L("noch ca. %@"), Format.readableDuration(max(remaining, 1)))
+    }
+}
+
 private struct ScreensCard: View {
     @EnvironmentObject private var state: AppState
 
     var body: some View {
-        Card(title: "Monitore") {
+        Card(title: L("Monitore")) {
             if !state.library.isEmpty {
                 Menu {
                     ForEach(state.library) { item in
                         Button(item.title) { state.assignToAll(item.id) }
                     }
                     Divider()
-                    Button("Alle aus") { state.assignToAll(nil) }
+                    Button(L("Alle aus")) { state.assignToAll(nil) }
                 } label: {
-                    Text("Für alle").font(.caption)
+                    Text(L("Für alle")).font(.caption)
                 }
                 .menuStyle(.borderlessButton)
                 .fixedSize()
@@ -408,9 +585,9 @@ private struct ScreensCard: View {
                 }
             }
             if state.library.isEmpty {
-                HintText(text: "Füge oben ein Video hinzu, dann kannst du es hier jedem Monitor zuordnen.")
+                HintText(text: L("Füge oben ein Video hinzu, dann kannst du es hier jedem Monitor zuordnen."))
             }
-            HintText(text: "Ausgeblendete Leisten kommen zurück, sobald die Maus an den Rand fährt.",
+            HintText(text: L("Ausgeblendete Leisten kommen zurück, sobald die Maus an den Rand fährt."),
                      icon: "info.circle")
         }
     }
@@ -437,7 +614,7 @@ private struct ScreenRow: View {
                     }
                     Spacer(minLength: 6)
                     Picker("", selection: videoBinding) {
-                        Text("Aus").tag(UUID?.none)
+                        Text(L("Aus")).tag(UUID?.none)
                         if !state.library.isEmpty { Divider() }
                         ForEach(state.library) { item in
                             Text(item.title).tag(Optional(item.id))
@@ -448,11 +625,11 @@ private struct ScreenRow: View {
                     .disabled(state.library.isEmpty)
                 }
                 HStack(spacing: 6) {
-                    BarToggle(title: "Menüleiste", icon: "menubar.rectangle",
-                              help: "Menüleiste auf diesem Monitor ausblenden",
+                    BarToggle(title: L("Menüleiste"), icon: "menubar.rectangle",
+                              help: L("Menüleiste auf diesem Monitor ausblenden"),
                               isOn: optionBinding(\.hideMenuBar))
-                    BarToggle(title: "Dock", icon: "dock.rectangle",
-                              help: "Dock auf diesem Monitor ausblenden (wirkt, wenn das Dock dort ist)",
+                    BarToggle(title: L("Dock"), icon: "dock.rectangle",
+                              help: L("Dock auf diesem Monitor ausblenden (wirkt, wenn das Dock dort ist)"),
                               isOn: optionBinding(\.hideDock))
                 }
             }
@@ -462,7 +639,7 @@ private struct ScreenRow: View {
     private var subtitle: String {
         let w = Int(screen.pixelSize.width), h = Int(screen.pixelSize.height)
         var parts = ["\(w) × \(h)"]
-        if h > w { parts.append("hochkant") }
+        if h > w { parts.append(L("hochkant")) }
         if screen.isBuiltIn { parts.append("OLED") }
         return parts.joined(separator: " · ")
     }
@@ -526,7 +703,7 @@ private struct BarToggle: View {
         } label: {
             HStack(spacing: 4) {
                 Image(systemName: isOn ? "eye.slash" : icon)
-                Text(isOn ? "\(title) aus" : title)
+                Text(title)
             }
             .font(.caption)
             .padding(.horizontal, 8)
@@ -544,7 +721,7 @@ private struct LibraryCard: View {
     @EnvironmentObject private var state: AppState
 
     var body: some View {
-        Card(title: "Bibliothek") {
+        Card(title: L("Bibliothek")) {
             Text("\(state.library.count) · \(Format.bytes(state.librarySize))")
                 .font(.caption2.monospacedDigit())
                 .foregroundStyle(.secondary)
@@ -579,7 +756,7 @@ private struct LibraryRow: View {
             Thumb(image: state.thumbnails[item.id])
             VStack(alignment: .leading, spacing: 2) {
                 if editing {
-                    TextField("Name", text: $draftTitle)
+                    TextField(L("Name"), text: $draftTitle)
                         .textFieldStyle(.roundedBorder)
                         .font(.callout)
                         .focused($titleFocused)
@@ -593,13 +770,13 @@ private struct LibraryRow: View {
                         .font(.callout)
                         .lineLimit(1)
                         .truncationMode(.middle)
-                        .help("Doppelklick zum Umbenennen")
+                        .help(L("Doppelklick zum Umbenennen"))
                         .onTapGesture(count: 2, perform: startRename)
                 }
                 if state.convertingID == item.id {
                     HStack(spacing: 4) {
                         ProgressView().controlSize(.mini)
-                        Text("Sparsame Version wird erstellt…")
+                        Text(L("Sparsame Version wird erstellt…"))
                     }
                     .font(.caption2)
                     .foregroundStyle(.secondary)
@@ -616,19 +793,19 @@ private struct LibraryRow: View {
                         Image(systemName: "pencil").foregroundStyle(.secondary)
                     }
                     .buttonStyle(.borderless)
-                    .help("Umbenennen")
+                    .help(L("Umbenennen"))
                     Button {
                         state.delete(item)
                     } label: {
                         Image(systemName: "trash").foregroundStyle(.secondary)
                     }
                     .buttonStyle(.borderless)
-                    .help("Video löschen")
+                    .help(L("Video löschen"))
                 }
             } else if usedOn > 0 {
                 Image(systemName: "checkmark.circle.fill")
                     .foregroundStyle(.green)
-                    .help(usedOn == 1 ? "Läuft auf 1 Monitor" : "Läuft auf \(usedOn) Monitoren")
+                    .help(usedOn == 1 ? L("Läuft auf 1 Monitor") : String(format: L("Läuft auf %d Monitoren"), usedOn))
             }
         }
         .padding(6)
@@ -636,14 +813,14 @@ private struct LibraryRow: View {
         .contentShape(Rectangle())
         .onHover { hovering = $0 }
         .contextMenu {
-            Button("Auf allen Monitoren zeigen") { state.assignToAll(item.id) }
+            Button(L("Auf allen Monitoren zeigen")) { state.assignToAll(item.id) }
             ForEach(state.screens) { screen in
-                Button("Auf \(screen.name) zeigen") { state.assign(item.id, to: screen.id) }
+                Button(String(format: L("Auf %@ zeigen"), screen.name)) { state.assign(item.id, to: screen.id) }
             }
             Divider()
-            Button("Umbenennen…", action: startRename)
-            Button("Im Finder zeigen") { state.revealInFinder(item) }
-            Button("Löschen", role: .destructive) { state.delete(item) }
+            Button(L("Umbenennen…"), action: startRename)
+            Button(L("Im Finder zeigen")) { state.revealInFinder(item) }
+            Button(L("Löschen"), role: .destructive) { state.delete(item) }
         }
     }
 
@@ -662,8 +839,8 @@ private struct LibraryRow: View {
         var parts: [String] = []
         if let d = item.duration { parts.append(Format.duration(d)) }
         if let s = item.fileSize { parts.append(Format.bytes(s)) }
-        parts.append(item.sourceURL == nil ? "Datei" : "YouTube")
-        if state.settings.powerSaving && item.ecoFileName != nil { parts.append("sparsam") }
+        parts.append(item.generated == true ? L("Erzeugt") : item.sourceURL == nil ? L("Datei") : "YouTube")
+        if state.settings.powerSaving && item.ecoFileName != nil { parts.append(L("sparsam")) }
         return parts.joined(separator: " · ")
     }
 }
@@ -682,10 +859,10 @@ private struct FooterView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             VStack(alignment: .leading, spacing: 4) {
-                Toggle("Beim Anmelden starten", isOn: loginBinding)
-                Toggle("Im Akkubetrieb pausieren", isOn: $state.settings.pauseOnBattery)
-                Toggle("Stromsparmodus (30 fps, max. 1440p)", isOn: $state.settings.powerSaving)
-                    .help("Erstellt von jedem Video einmalig eine sparsame Kopie und spielt diese ab. Das Original bleibt erhalten.")
+                Toggle(L("Beim Anmelden starten"), isOn: loginBinding)
+                Toggle(L("Im Akkubetrieb pausieren"), isOn: $state.settings.pauseOnBattery)
+                Toggle(L("Stromsparmodus (30 fps, max. 1440p)"), isOn: $state.settings.powerSaving)
+                    .help(L("Erstellt von jedem Video einmalig eine sparsame Kopie und spielt diese ab. Das Original bleibt erhalten."))
             }
             .toggleStyle(.checkbox)
             .font(.caption)
@@ -705,8 +882,8 @@ private struct FooterView: View {
                     Image(systemName: "folder")
                 }
                 .buttonStyle(.borderless)
-                .help("Videoordner im Finder öffnen")
-                Button("Beenden") { NSApp.terminate(nil) }
+                .help(L("Videoordner im Finder öffnen"))
+                Button(L("Beenden")) { NSApp.terminate(nil) }
                     .keyboardShortcut("q")
                     .controlSize(.small)
             }

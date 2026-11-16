@@ -1,6 +1,10 @@
 import AppKit
 import Foundation
 
+func L(_ key: String) -> String {
+    NSLocalizedString(key, comment: "")
+}
+
 struct VideoItem: Codable, Identifiable, Hashable {
     let id: UUID
     var title: String
@@ -11,6 +15,7 @@ struct VideoItem: Codable, Identifiable, Hashable {
     var fileSize: Int64?
     var ecoFileName: String?
     var ecoFileSize: Int64?
+    var generated: Bool?
 
     var fileURL: URL { Storage.videosDir.appendingPathComponent(fileName) }
     var ecoURL: URL? { ecoFileName.map { Storage.videosDir.appendingPathComponent($0) } }
@@ -139,10 +144,10 @@ enum Format {
         let s = Int(seconds.rounded())
         let h = s / 3600, m = (s % 3600) / 60, sec = s % 60
         var parts: [String] = []
-        if h > 0 { parts.append("\(h) Std.") }
-        if m > 0 { parts.append("\(m) Min.") }
-        if sec > 0 && h == 0 { parts.append("\(sec) Sek.") }
-        return parts.isEmpty ? "0 Sek." : parts.joined(separator: " ")
+        if h > 0 { parts.append(String(format: L("%d Std."), h)) }
+        if m > 0 { parts.append(String(format: L("%d Min."), m)) }
+        if sec > 0 && h == 0 { parts.append(String(format: L("%d Sek."), sec)) }
+        return parts.isEmpty ? String(format: L("%d Sek."), 0) : parts.joined(separator: " ")
     }
 
     static func parseTime(_ text: String) -> Double? {
@@ -175,5 +180,28 @@ extension NSScreen {
     var isBuiltIn: Bool {
         guard let id = displayID else { return false }
         return CGDisplayIsBuiltin(id) != 0
+    }
+}
+
+final class CancelFlag: @unchecked Sendable {
+    private let lock = NSLock()
+    private var value = false
+
+    var isSet: Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        return value
+    }
+
+    func set() {
+        lock.lock()
+        value = true
+        lock.unlock()
+    }
+
+    func reset() {
+        lock.lock()
+        value = false
+        lock.unlock()
     }
 }

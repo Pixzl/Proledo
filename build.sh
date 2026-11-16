@@ -10,6 +10,7 @@ mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp .build/release/Proledo "$APP/Contents/MacOS/Proledo"
 cp Resources/Info.plist "$APP/Contents/Info.plist"
 cp Resources/Proledo.icns "$APP/Contents/Resources/Proledo.icns"
+cp -R Resources/*.lproj "$APP/Contents/Resources/"
 codesign --force --sign - "$APP" >/dev/null
 
 echo "Fertig: $(pwd)/$APP"

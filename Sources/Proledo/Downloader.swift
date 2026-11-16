@@ -46,7 +46,7 @@ final class Downloader {
 
     func fetchInfo(urlString: String, preferLowFrameRate: Bool = false) async throws -> VideoInfo {
         guard let tool = Self.findYtDlp() else {
-            throw UserError(message: "yt-dlp nicht gefunden. Installieren mit: brew install yt-dlp")
+            throw UserError(message: L("yt-dlp nicht gefunden. Installieren mit: brew install yt-dlp"))
         }
         let process = Process()
         process.executableURL = tool
@@ -80,17 +80,17 @@ final class Downloader {
         guard status == 0,
               let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
         else {
-            throw UserError(message: Self.errorMessage(from: errData) ?? "Video konnte nicht gelesen werden.")
+            throw UserError(message: Self.errorMessage(from: errData) ?? L("Video konnte nicht gelesen werden."))
         }
         if json["is_live"] as? Bool == true {
-            throw UserError(message: "Livestreams werden nicht unterstützt.")
+            throw UserError(message: L("Livestreams werden nicht unterstützt."))
         }
 
         let duration = json["duration"] as? Double
         let formats = json["formats"] as? [[String: Any]] ?? []
         return VideoInfo(
             url: urlString,
-            title: json["title"] as? String ?? "Unbenanntes Video",
+            title: json["title"] as? String ?? L("Unbenanntes Video"),
             channel: (json["channel"] ?? json["uploader"]) as? String,
             duration: duration,
             thumbnail: (json["thumbnail"] as? String).flatMap(URL.init(string:)),
@@ -166,7 +166,7 @@ final class Downloader {
     func start(urlString: String, id: UUID, formatID: String?, range: ClosedRange<Double>?,
                estimatedBytes: Int64?, handler: @escaping (Event) -> Void) {
         guard let tool = Self.findYtDlp() else {
-            handler(.failed("yt-dlp nicht gefunden. Installieren mit: brew install yt-dlp"))
+            handler(.failed(L("yt-dlp nicht gefunden. Installieren mit: brew install yt-dlp")))
             return
         }
 
@@ -226,7 +226,7 @@ final class Downloader {
             try process.run()
             self.process = process
         } catch {
-            handler(.failed("yt-dlp konnte nicht gestartet werden: \(error.localizedDescription)"))
+            handler(.failed(String(format: L("yt-dlp konnte nicht gestartet werden: %@"), error.localizedDescription)))
             return
         }
 
@@ -310,7 +310,7 @@ private final class Session {
         if status == 0, let file, FileManager.default.fileExists(atPath: file.path) {
             handler(.finished(file: file, title: title))
         } else {
-            handler(.failed(Downloader.errorMessage(from: errData) ?? "Download fehlgeschlagen (Code \(status))."))
+            handler(.failed(Downloader.errorMessage(from: errData) ?? String(format: L("Download fehlgeschlagen (Code %d)."), Int(status))))
         }
     }
 

@@ -62,20 +62,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         guard let button = statusItem?.button else { return }
         popover.performClose(nil)
         let menu = NSMenu()
-        let pause = menu.addItem(withTitle: state.settings.userPaused ? "Fortsetzen" : "Pausieren",
+        let pause = menu.addItem(withTitle: state.settings.userPaused ? L("Fortsetzen") : L("Pausieren"),
                                  action: #selector(quickTogglePause), keyEquivalent: "")
         pause.target = self
         menu.addItem(.separator())
-        let saving = menu.addItem(withTitle: "Stromsparmodus", action: #selector(quickTogglePowerSaving), keyEquivalent: "")
+        let saving = menu.addItem(withTitle: L("Stromsparmodus"), action: #selector(quickTogglePowerSaving), keyEquivalent: "")
         saving.target = self
         saving.state = state.settings.powerSaving ? .on : .off
-        let login = menu.addItem(withTitle: "Beim Anmelden starten", action: #selector(quickToggleLogin), keyEquivalent: "")
+        let login = menu.addItem(withTitle: L("Beim Anmelden starten"), action: #selector(quickToggleLogin), keyEquivalent: "")
         login.target = self
         login.state = state.launchAtLogin ? .on : .off
-        let folder = menu.addItem(withTitle: "Videoordner öffnen", action: #selector(quickOpenFolder), keyEquivalent: "")
+        let folder = menu.addItem(withTitle: L("Videoordner öffnen"), action: #selector(quickOpenFolder), keyEquivalent: "")
         folder.target = self
         menu.addItem(.separator())
-        menu.addItem(withTitle: "Proledo beenden", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
+        menu.addItem(withTitle: L("Proledo beenden"), action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
         menu.popUp(positioning: nil, at: NSPoint(x: 0, y: button.bounds.height + 4), in: button)
     }
 
@@ -114,18 +114,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             return true
         }
         image.isTemplate = true
-        image.accessibilityDescription = playing ? "Proledo – Video läuft" : "Proledo"
+        image.accessibilityDescription = playing ? L("Proledo – Video läuft") : "Proledo"
         return image
     }
 
     private func installEditMenu() {
         let main = NSMenu()
         let editItem = NSMenuItem()
-        let edit = NSMenu(title: "Bearbeiten")
-        edit.addItem(withTitle: "Ausschneiden", action: #selector(NSText.cut(_:)), keyEquivalent: "x")
-        edit.addItem(withTitle: "Kopieren", action: #selector(NSText.copy(_:)), keyEquivalent: "c")
-        edit.addItem(withTitle: "Einsetzen", action: #selector(NSText.paste(_:)), keyEquivalent: "v")
-        edit.addItem(withTitle: "Alles auswählen", action: #selector(NSText.selectAll(_:)), keyEquivalent: "a")
+        let edit = NSMenu(title: L("Bearbeiten"))
+        edit.addItem(withTitle: L("Ausschneiden"), action: #selector(NSText.cut(_:)), keyEquivalent: "x")
+        edit.addItem(withTitle: L("Kopieren"), action: #selector(NSText.copy(_:)), keyEquivalent: "c")
+        edit.addItem(withTitle: L("Einsetzen"), action: #selector(NSText.paste(_:)), keyEquivalent: "v")
+        edit.addItem(withTitle: L("Alles auswählen"), action: #selector(NSText.selectAll(_:)), keyEquivalent: "a")
         editItem.submenu = edit
         main.addItem(editItem)
         NSApp.mainMenu = main

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.5 – November 16, 2026
+
+- Proledo can now make wallpapers on its own: flowing contour lines on black, made to fit the exact shape of the display you pick, portrait screens included. Choose how dense, how fast and how bold, hit Create, done.
+- Generated wallpapers loop seamlessly and have no watermark, so there's nothing static left to burn in.
+- The app now speaks English, German, French and Spanish, depending on your Mac's language.
+
 ## 0.4 – November 16, 2026
 
 - You can rename videos now. Double-click a name in the library, use the pencil icon or right-click and pick Rename.
