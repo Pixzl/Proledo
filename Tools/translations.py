@@ -173,6 +173,9 @@ T = {
     "Wird erzeugt": ("Creating", "Création", "Creando"),
     "Vom Mac": ("From your Mac", "Depuis ton Mac", "Desde tu Mac"),
     "Höhenlinien-Loop": ("Contour line loop", "Courbes en boucle", "Curvas en bucle"),
+    "Menüleiste ausblenden": ("Hide menu bar", "Masquer la barre des menus", "Ocultar barra de menús"),
+    "Dock ausblenden": ("Hide Dock", "Masquer le Dock", "Ocultar el Dock"),
+    "läuft": ("playing", "en cours", "en uso"),
 }
 
 root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

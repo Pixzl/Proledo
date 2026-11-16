@@ -5,118 +5,78 @@ struct MenuView: View {
     @EnvironmentObject private var state: AppState
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: 0) {
             HeaderView()
+                .padding(.bottom, 12)
+            Divider()
             if state.generatorOpen {
                 GeneratorCard()
+                    .padding(.vertical, 12)
             } else {
-                if state.library.isEmpty && state.generatorProgress == nil {
-                    WelcomeCard()
-                }
                 AddVideoCard()
+                    .padding(.vertical, 12)
+                Divider()
                 ScreensCard()
+                    .padding(.vertical, 12)
                 if !state.library.isEmpty {
+                    Divider()
                     LibraryCard()
+                        .padding(.vertical, 12)
                 }
             }
+            Divider()
             FooterView()
+                .padding(.top, 8)
         }
-        .padding(12)
-        .frame(width: 390)
+        .padding(14)
+        .frame(width: 380)
         .background(Color(nsColor: .windowBackgroundColor).ignoresSafeArea())
     }
 }
 
-struct PillButtonStyle: ButtonStyle {
-    var prominent = false
-    var compact = false
-
-    func makeBody(configuration: Configuration) -> some View {
-        PillBody(configuration: configuration, prominent: prominent, compact: compact)
-    }
-
-    private struct PillBody: View {
-        let configuration: ButtonStyleConfiguration
-        let prominent: Bool
-        let compact: Bool
-        @Environment(\.isEnabled) private var isEnabled
-        @State private var hovering = false
-
-        var body: some View {
-            configuration.label
-                .font(compact ? .caption.weight(.medium) : .callout.weight(prominent ? .semibold : .medium))
-                .padding(.horizontal, compact ? 10 : 14)
-                .padding(.vertical, compact ? 4 : 6)
-                .foregroundStyle(prominent ? Color.white : Color.primary)
-                .background(
-                    Capsule().fill(prominent
-                        ? Color.accentColor.opacity(hovering ? 0.88 : 1)
-                        : Color.primary.opacity(hovering ? 0.13 : 0.08))
-                )
-                .scaleEffect(configuration.isPressed ? 0.97 : 1)
-                .opacity(isEnabled ? 1 : 0.4)
-                .contentShape(Capsule())
-                .onHover { hovering = $0 && isEnabled }
-                .animation(.easeOut(duration: 0.12), value: hovering)
-                .animation(.easeOut(duration: 0.08), value: configuration.isPressed)
-        }
-    }
-}
-
-private struct ActionTile: View {
+private struct MenuRow: View {
     let icon: String
-    let colors: [Color]
     let title: String
-    let subtitle: String
     let action: () -> Void
     @State private var hovering = false
 
     var body: some View {
         Button(action: action) {
-            HStack(spacing: 9) {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 7, style: .continuous)
-                        .fill(LinearGradient(colors: colors, startPoint: .topLeading, endPoint: .bottomTrailing))
-                    Image(systemName: icon)
-                        .font(.system(size: 12, weight: .semibold))
-                        .foregroundStyle(.white)
-                }
-                .frame(width: 28, height: 28)
-                VStack(alignment: .leading, spacing: 1) {
-                    Text(title)
-                        .font(.callout.weight(.medium))
-                        .foregroundStyle(.primary)
-                        .lineLimit(1)
-                    Text(subtitle)
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-                        .lineLimit(1)
-                }
-                Spacer(minLength: 0)
+            HStack(spacing: 8) {
+                Image(systemName: icon)
+                    .foregroundStyle(.secondary)
+                    .frame(width: 18)
+                Text(title)
+                Spacer()
             }
-            .padding(8)
-            .frame(maxWidth: .infinity)
+            .padding(.horizontal, 6)
+            .padding(.vertical, 4)
             .background(
-                RoundedRectangle(cornerRadius: 10, style: .continuous)
-                    .fill(Color.primary.opacity(hovering ? 0.09 : 0.05))
+                RoundedRectangle(cornerRadius: 5, style: .continuous)
+                    .fill(hovering ? Color.primary.opacity(0.08) : .clear)
             )
-            .overlay(
-                RoundedRectangle(cornerRadius: 10, style: .continuous)
-                    .strokeBorder(Color.primary.opacity(hovering ? 0.14 : 0.07))
-            )
-            .contentShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+            .contentShape(Rectangle())
         }
-        .buttonStyle(PressableStyle())
+        .buttonStyle(.plain)
         .onHover { hovering = $0 }
-        .animation(.easeOut(duration: 0.12), value: hovering)
     }
 }
 
-private struct PressableStyle: ButtonStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .scaleEffect(configuration.isPressed ? 0.97 : 1)
-            .animation(.easeOut(duration: 0.08), value: configuration.isPressed)
+private struct SwitchRow: View {
+    let title: String
+    let help: String
+    @Binding var isOn: Bool
+
+    var body: some View {
+        HStack {
+            Text(title)
+            Spacer()
+            Toggle("", isOn: $isOn)
+                .labelsHidden()
+                .toggleStyle(.switch)
+                .controlSize(.mini)
+        }
+        .help(help)
     }
 }
 
@@ -128,60 +88,20 @@ private struct Card<Content: View, Trailing: View>: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
-                Text(title.uppercased())
-                    .font(.system(size: 10, weight: .semibold))
-                    .tracking(0.6)
-                    .foregroundStyle(.secondary)
+                Text(title)
+                    .font(.system(size: 13, weight: .semibold))
                 Spacer()
                 trailing
             }
             content
         }
-        .padding(12)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .fill(Color.primary.opacity(0.045))
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .strokeBorder(Color.primary.opacity(0.07))
-        )
     }
 }
 
 extension Card where Trailing == EmptyView {
     init(title: String, @ViewBuilder content: () -> Content) {
         self.init(title: title, trailing: { EmptyView() }, content: content)
-    }
-}
-
-private struct Thumb: View {
-    let image: NSImage?
-    var width: CGFloat = 64
-    var height: CGFloat = 36
-    var radius: CGFloat = 6
-
-    var body: some View {
-        ZStack {
-            if let image {
-                Image(nsImage: image)
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-            } else {
-                LinearGradient(colors: [.gray.opacity(0.35), .gray.opacity(0.15)],
-                               startPoint: .topLeading, endPoint: .bottomTrailing)
-                Image(systemName: "film")
-                    .font(.system(size: min(width, height) * 0.35))
-                    .foregroundStyle(.secondary)
-            }
-        }
-        .frame(width: width, height: height)
-        .clipShape(RoundedRectangle(cornerRadius: radius, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: radius, style: .continuous)
-                .strokeBorder(Color.primary.opacity(0.1))
-        )
     }
 }
 
@@ -201,46 +121,21 @@ private struct HintText: View {
     }
 }
 
-private struct WelcomeCard: View {
-    var body: some View {
-        Card(title: L("Willkommen")) {
-            VStack(alignment: .leading, spacing: 10) {
-                Text(L("Proledo hält dein OLED-Display in Bewegung, damit sich nichts einbrennt."))
-                    .font(.callout)
-                    .fixedSize(horizontal: false, vertical: true)
-                step(1, L("Füge unten ein Video hinzu: per YouTube-Link, als eigene Datei oder selbst erzeugt."))
-                step(2, L("Wähle unter „Monitore“, wo es laufen soll."))
-                step(3, L("Blende bei Bedarf Menüleiste und Dock aus."))
-            }
-        }
-    }
-
-    private func step(_ number: Int, _ text: String) -> some View {
-        HStack(alignment: .firstTextBaseline, spacing: 8) {
-            Text("\(number)")
-                .font(.caption.weight(.bold))
-                .foregroundStyle(.white)
-                .frame(width: 18, height: 18)
-                .background(Circle().fill(Color.accentColor))
-            Text(text)
-                .font(.callout)
-                .foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-    }
-}
-
 private struct HeaderView: View {
     @EnvironmentObject private var state: AppState
 
-    private var status: (text: String, color: Color) {
+    private var status: String {
         if let progress = state.generatorProgress, !state.generatorOpen {
-            return (String(format: L("Hintergrund wird erzeugt · %d %%"), Int(progress * 100)), .blue)
+            return String(format: L("Hintergrund wird erzeugt · %d %%"), Int(progress * 100))
         }
-        if let reason = state.pauseReason { return (reason, .orange) }
+        if let reason = state.pauseReason { return reason }
         let count = state.activeScreenCount
-        if count == 0 { return (L("Kein Video aktiv"), .secondary) }
-        return (count == 1 ? L("Läuft auf 1 Monitor") : String(format: L("Läuft auf %d Monitoren"), count), .green)
+        if count == 0 { return L("Kein Video aktiv") }
+        return count == 1 ? L("Läuft auf 1 Monitor") : String(format: L("Läuft auf %d Monitoren"), count)
+    }
+
+    private var playing: Binding<Bool> {
+        Binding(get: { !state.settings.userPaused }, set: { state.settings.userPaused = !$0 })
     }
 
     var body: some View {
@@ -248,35 +143,17 @@ private struct HeaderView: View {
             Image(nsImage: NSApp.applicationIconImage)
                 .resizable()
                 .interpolation(.high)
-                .frame(width: 36, height: 36)
-
-            VStack(alignment: .leading, spacing: 2) {
-                Text("Proledo").font(.system(size: 14, weight: .semibold))
-                HStack(spacing: 5) {
-                    Circle()
-                        .fill(status.color)
-                        .frame(width: 6, height: 6)
-                        .shadow(color: status.color.opacity(0.8), radius: 3)
-                    Text(status.text).font(.caption).foregroundStyle(.secondary).lineLimit(1)
-                }
-                .padding(.horizontal, 7)
-                .padding(.vertical, 2)
-                .background(Capsule().fill(status.color.opacity(0.12)))
+                .frame(width: 28, height: 28)
+            VStack(alignment: .leading, spacing: 1) {
+                Text("Proledo").font(.system(size: 13, weight: .semibold))
+                Text(status).font(.caption).foregroundStyle(.secondary).lineLimit(1)
             }
             Spacer()
-            Button {
-                state.togglePause()
-            } label: {
-                Image(systemName: state.settings.userPaused ? "play.fill" : "pause.fill")
-                    .font(.system(size: 12, weight: .semibold))
-                    .frame(width: 28, height: 28)
-                    .background(Circle().fill(Color.primary.opacity(0.08)))
-                    .contentShape(Circle())
-            }
-            .buttonStyle(.plain)
-            .help(state.settings.userPaused ? L("Wiedergabe fortsetzen") : L("Wiedergabe pausieren"))
+            Toggle("", isOn: playing)
+                .labelsHidden()
+                .toggleStyle(.switch)
+                .help(state.settings.userPaused ? L("Wiedergabe fortsetzen") : L("Wiedergabe pausieren"))
         }
-        .padding(.horizontal, 2)
     }
 }
 
@@ -311,77 +188,44 @@ private struct AddVideoCard: View {
 
     @ViewBuilder
     private var linkField: some View {
-        HStack(spacing: 8) {
-            HStack(spacing: 7) {
-                Image(systemName: "link")
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundStyle(.secondary)
-                TextField(L("YouTube-Link einfügen"), text: $urlText)
-                    .textFieldStyle(.plain)
-                    .focused($linkFocused)
-                    .onSubmit { if canGo { state.loadInfo(urlText) } }
-                    .disabled(isLoading)
-                if !isLoading {
-                    if urlText.isEmpty {
-                        Button {
-                            if let text = NSPasteboard.general.string(forType: .string) {
-                                urlText = text.trimmingCharacters(in: .whitespacesAndNewlines)
-                                state.loadInfo(urlText)
-                            }
-                        } label: {
-                            Image(systemName: "doc.on.clipboard")
-                                .font(.system(size: 12, weight: .medium))
-                                .foregroundStyle(.secondary)
-                                .frame(width: 22, height: 22)
-                                .contentShape(Rectangle())
-                        }
-                        .buttonStyle(.plain)
-                        .help(L("Link aus der Zwischenablage einfügen und prüfen"))
-                    } else {
-                        Button {
-                            urlText = ""
-                        } label: {
-                            Image(systemName: "xmark.circle.fill")
-                                .foregroundStyle(.tertiary)
-                                .frame(width: 22, height: 22)
-                                .contentShape(Rectangle())
-                        }
-                        .buttonStyle(.plain)
-                    }
+        HStack(spacing: 6) {
+            TextField(L("YouTube-Link einfügen"), text: $urlText)
+                .textFieldStyle(.roundedBorder)
+                .onSubmit { if canGo { state.loadInfo(urlText) } }
+                .disabled(isLoading)
+            if isLoading {
+                ProgressView().controlSize(.small)
+                Button {
+                    state.cancelAdd()
+                } label: {
+                    Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary)
                 }
-            }
-            .padding(.leading, 10)
-            .padding(.trailing, 5)
-            .padding(.vertical, 5)
-            .background(RoundedRectangle(cornerRadius: 10, style: .continuous).fill(Color.primary.opacity(0.06)))
-            .overlay(
-                RoundedRectangle(cornerRadius: 10, style: .continuous)
-                    .strokeBorder(linkFocused ? Color.accentColor.opacity(0.7) : Color.primary.opacity(0.08),
-                                  lineWidth: linkFocused ? 1.5 : 1)
-            )
-            .animation(.easeOut(duration: 0.15), value: linkFocused)
-
-            Button {
-                if isLoading { state.cancelAdd() } else { state.loadInfo(urlText) }
-            } label: {
-                ZStack {
-                    Circle().fill(canGo || isLoading ? Color.accentColor : Color.primary.opacity(0.1))
-                    if isLoading {
-                        ProgressView().controlSize(.small).tint(.white)
-                    } else {
-                        Image(systemName: "arrow.right")
-                            .font(.system(size: 13, weight: .bold))
-                            .foregroundStyle(canGo ? Color.white : Color.secondary)
-                    }
+                .buttonStyle(.borderless)
+                .help(L("Abbrechen"))
+            } else if canGo {
+                Button {
+                    state.loadInfo(urlText)
+                } label: {
+                    Image(systemName: "arrow.right.circle.fill")
+                        .font(.system(size: 18))
+                        .foregroundStyle(Color.accentColor)
                 }
-                .frame(width: 32, height: 32)
-                .contentShape(Circle())
+                .buttonStyle(.borderless)
+                .keyboardShortcut(.defaultAction)
+                .help(L("Weiter"))
+            } else {
+                Button {
+                    if let text = NSPasteboard.general.string(forType: .string) {
+                        urlText = text.trimmingCharacters(in: .whitespacesAndNewlines)
+                        state.loadInfo(urlText)
+                    }
+                } label: {
+                    Image(systemName: "doc.on.clipboard")
+                        .foregroundStyle(.secondary)
+                }
+                .buttonStyle(.borderless)
+                .help(L("Link aus der Zwischenablage einfügen und prüfen"))
             }
-            .buttonStyle(.plain)
-            .keyboardShortcut(.defaultAction)
-            .disabled(!canGo && !isLoading)
-            .help(isLoading ? L("Abbrechen") : L("Weiter"))
-            .animation(.easeOut(duration: 0.15), value: canGo)
         }
 
         if isLoading {
@@ -394,29 +238,22 @@ private struct AddVideoCard: View {
                      icon: "exclamationmark.triangle.fill")
         }
 
-        HStack(spacing: 8) {
-            ActionTile(icon: "folder.fill",
-                       colors: [Color(red: 0.25, green: 0.55, blue: 1.0), Color(red: 0.15, green: 0.4, blue: 0.95)],
-                       title: L("Eigene Datei"),
-                       subtitle: L("Vom Mac")) {
+        VStack(spacing: 0) {
+            MenuRow(icon: "folder", title: L("Eigene Videodatei wählen…")) {
                 state.importLocalFile()
             }
             if let progress = state.generatorProgress {
-                ActionTile(icon: "sparkles",
-                           colors: [Color(red: 0.55, green: 0.38, blue: 1.0), Color(red: 0.95, green: 0.4, blue: 0.7)],
-                           title: L("Wird erzeugt"),
-                           subtitle: "\(Int(progress * 100)) %") {
+                MenuRow(icon: "scribble.variable",
+                        title: String(format: L("Wird erzeugt · %d %%"), Int(progress * 100))) {
                     state.openGenerator()
                 }
             } else {
-                ActionTile(icon: "sparkles",
-                           colors: [Color(red: 0.55, green: 0.38, blue: 1.0), Color(red: 0.95, green: 0.4, blue: 0.7)],
-                           title: L("Selbst erzeugen"),
-                           subtitle: L("Höhenlinien-Loop")) {
+                MenuRow(icon: "scribble.variable", title: L("Hintergrund erzeugen…")) {
                     state.openGenerator()
                 }
             }
         }
+        .padding(.horizontal, -6)
     }
 
     private func progressView(title: String, fraction: Double?, bytes: Int64?) -> some View {
@@ -554,13 +391,13 @@ private struct ReadyView: View {
                 }
                 Spacer()
                 Button(L("Abbrechen")) { state.cancelAdd() }
-                    .buttonStyle(PillButtonStyle())
+                    .buttonStyle(.bordered)
                 Button {
                     state.startDownload(info)
                 } label: {
-                    Label(L("Laden"), systemImage: "arrow.down")
+                    Text(L("Laden"))
                 }
-                .buttonStyle(PillButtonStyle(prominent: true))
+                .buttonStyle(.borderedProminent)
                 .keyboardShortcut(.defaultAction)
                 .disabled(check.error != nil || needsFfmpeg)
             }
@@ -590,13 +427,25 @@ private struct GeneratorCard: View {
 
     var body: some View {
         Card(title: L("Hintergrund erzeugen")) {
-            Button {
-                state.closeGenerator()
-            } label: {
-                Image(systemName: "xmark").foregroundStyle(.secondary)
+            HStack(spacing: 10) {
+                if !busy {
+                    Button {
+                        state.shuffleGeneratorPattern()
+                    } label: {
+                        Image(systemName: "shuffle")
+                    }
+                    .buttonStyle(.borderless)
+                    .help(L("Neues Muster"))
+                }
+                Button {
+                    state.closeGenerator()
+                } label: {
+                    Image(systemName: "xmark")
+                }
+                .buttonStyle(.borderless)
+                .help(busy ? L("Im Hintergrund weiterrechnen") : L("Schließen"))
             }
-            .buttonStyle(.borderless)
-            .help(busy ? L("Im Hintergrund weiterrechnen") : L("Schließen"))
+            .foregroundStyle(.secondary)
         } content: {
             VStack(alignment: .leading, spacing: 10) {
                 preview
@@ -612,37 +461,20 @@ private struct GeneratorCard: View {
     }
 
     private var preview: some View {
-        ZStack(alignment: .bottomTrailing) {
-            ZStack {
-                Color.black
-                if let image = state.generatorPreview {
-                    Image(nsImage: image)
-                        .resizable()
-                        .interpolation(.high)
-                        .aspectRatio(contentMode: .fit)
-                } else {
-                    ProgressView().controlSize(.small)
-                }
-            }
-            .frame(maxWidth: .infinity)
-            .frame(height: 150)
-            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-
-            if !busy {
-                Button {
-                    state.shuffleGeneratorPattern()
-                } label: {
-                    Label(L("Neues Muster"), systemImage: "shuffle")
-                        .font(.caption)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(Capsule().fill(.black.opacity(0.6)))
-                        .foregroundStyle(.white)
-                }
-                .buttonStyle(.plain)
-                .padding(8)
+        ZStack {
+            Color.black
+            if let image = state.generatorPreview {
+                Image(nsImage: image)
+                    .resizable()
+                    .interpolation(.high)
+                    .aspectRatio(contentMode: .fit)
+            } else {
+                ProgressView().controlSize(.small)
             }
         }
+        .frame(maxWidth: .infinity)
+        .frame(height: 140)
+        .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
     }
 
     private var controls: some View {
@@ -696,13 +528,13 @@ private struct GeneratorCard: View {
             HStack {
                 Spacer()
                 Button(L("Abbrechen")) { state.closeGenerator() }
-                    .buttonStyle(PillButtonStyle())
+                    .buttonStyle(.bordered)
                 Button {
                     state.startGeneration()
                 } label: {
-                    Label(L("Erzeugen"), systemImage: "sparkles")
+                    Text(L("Erzeugen"))
                 }
-                .buttonStyle(PillButtonStyle(prominent: true))
+                .buttonStyle(.borderedProminent)
             }
         }
     }
@@ -734,7 +566,7 @@ private struct GeneratorCard: View {
                 }
                 Spacer()
                 Button(L("Abbrechen")) { state.cancelGeneration() }
-                    .buttonStyle(PillButtonStyle(compact: true))
+                    .controlSize(.small)
             }
         }
     }
@@ -773,7 +605,7 @@ private struct ScreensCard: View {
                     Divider()
                     Button(L("Alle aus")) { state.assignToAll(nil) }
                 } label: {
-                    Text(L("Für alle")).font(.caption)
+                    Text(L("Für alle"))
                 }
                 .menuStyle(.borderlessButton)
                 .fixedSize()
@@ -787,9 +619,7 @@ private struct ScreensCard: View {
             }
             if anyRotating {
                 HStack {
-                    Label(L("Wechsel alle"), systemImage: "arrow.triangle.2.circlepath")
-                        .font(.callout)
-                        .foregroundStyle(.secondary)
+                    Text(L("Wechsel alle"))
                     Spacer()
                     Picker("", selection: $state.settings.rotationMinutes) {
                         ForEach([10, 30, 60, 120], id: \.self) { minutes in
@@ -800,8 +630,12 @@ private struct ScreensCard: View {
                     .fixedSize()
                 }
             }
-            HintText(text: L("Ausgeblendete Leisten kommen zurück, sobald die Maus an den Rand fährt."),
-                     icon: "info.circle")
+            if state.library.isEmpty {
+                Text(L("Füge oben ein Video hinzu, dann kannst du es hier jedem Monitor zuordnen."))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
         }
     }
 }
@@ -813,26 +647,22 @@ private struct ScreenMap: View {
     var body: some View {
         GeometryReader { geo in
             let union = state.screens.reduce(CGRect.null) { $0.union($1.frame) }
-            let pad: CGFloat = 4
-            let scale = min((geo.size.width - 2 * pad) / max(union.width, 1),
-                            (geo.size.height - 2 * pad) / max(union.height, 1))
+            let scale = min(geo.size.width / max(union.width, 1), geo.size.height / max(union.height, 1))
             let originX = (geo.size.width - union.width * scale) / 2
             let originY = (geo.size.height - union.height * scale) / 2
             ZStack(alignment: .topLeading) {
                 ForEach(state.screens) { screen in
-                    let gap: CGFloat = 5
-                    let width = max(screen.frame.width * scale - gap, 8)
-                    let height = max(screen.frame.height * scale - gap, 8)
+                    let gap: CGFloat = 4
                     ScreenTile(screen: screen, selected: screen.id == selectedID)
-                        .frame(width: width, height: height)
+                        .frame(width: max(screen.frame.width * scale - gap, 8),
+                               height: max(screen.frame.height * scale - gap, 8))
                         .offset(x: originX + (screen.frame.minX - union.minX) * scale + gap / 2,
                                 y: originY + (union.maxY - screen.frame.maxY) * scale + gap / 2)
                         .onTapGesture { selectedID = screen.id }
                 }
             }
         }
-        .frame(height: 118)
-        .padding(.vertical, 2)
+        .frame(height: 104)
     }
 }
 
@@ -840,119 +670,88 @@ private struct ScreenTile: View {
     @EnvironmentObject private var state: AppState
     let screen: ScreenInfo
     let selected: Bool
-    @State private var hovering = false
 
     var body: some View {
-        let video = state.assignment(for: screen.id)
-        let options = state.options(for: screen.id)
-        ZStack {
-            if let video, let image = state.thumbnails[video] {
-                Color.black
-                Image(nsImage: image).resizable().aspectRatio(contentMode: .fill)
-            } else {
-                Color(white: 0.1)
-                Image(systemName: screen.isBuiltIn ? "laptopcomputer" : "display")
-                    .font(.system(size: 11))
-                    .foregroundStyle(.white.opacity(0.35))
-            }
-            VStack(spacing: 0) {
-                if options.hideMenuBar {
-                    Rectangle().fill(.black).frame(height: 3)
-                } else {
-                    Rectangle().fill(.white.opacity(0.35)).frame(height: 2)
+        Color.black
+            .overlay {
+                if let video = state.assignment(for: screen.id), let image = state.thumbnails[video] {
+                    Image(nsImage: image).resizable().aspectRatio(contentMode: .fill)
                 }
-                Spacer()
             }
-        }
-        .clipShape(RoundedRectangle(cornerRadius: 4, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: 3, style: .continuous))
         .overlay(
-            RoundedRectangle(cornerRadius: 4, style: .continuous)
-                .strokeBorder(selected ? Color.accentColor : Color.white.opacity(hovering ? 0.45 : 0.2),
-                              lineWidth: selected ? 2.5 : 1)
+            RoundedRectangle(cornerRadius: 3, style: .continuous)
+                .strokeBorder(selected ? Color.accentColor : Color.primary.opacity(0.25),
+                              lineWidth: selected ? 2 : 1)
         )
-        .overlay(alignment: .topTrailing) {
+        .overlay(alignment: .bottomTrailing) {
             if state.isRotating(screen.id) {
                 Image(systemName: "arrow.triangle.2.circlepath")
-                    .font(.system(size: 7, weight: .bold))
-                    .foregroundStyle(.white)
-                    .padding(3)
-                    .background(Circle().fill(.black.opacity(0.65)))
+                    .font(.system(size: 8, weight: .semibold))
+                    .foregroundStyle(.white.opacity(0.85))
                     .padding(4)
             }
         }
-        .shadow(color: selected ? Color.accentColor.opacity(0.35) : .clear, radius: 5)
         .contentShape(Rectangle())
-        .onHover { hovering = $0 }
         .help(screen.name)
-        .animation(.easeOut(duration: 0.15), value: selected)
     }
+}
+
+private enum VideoChoice: Hashable {
+    case off
+    case rotate
+    case video(UUID)
 }
 
 private struct ScreenDetail: View {
     @EnvironmentObject private var state: AppState
     let screen: ScreenInfo
 
-    private var assigned: VideoItem? {
-        state.assignment(for: screen.id).flatMap { id in state.library.first { $0.id == id } }
+    private var selection: Binding<VideoChoice> {
+        Binding(
+            get: {
+                if state.isRotating(screen.id) { return .rotate }
+                if let id = state.fixedAssignment(for: screen.id) { return .video(id) }
+                return .off
+            },
+            set: { choice in
+                switch choice {
+                case .off: state.assign(nil, to: screen.id)
+                case .rotate: state.setRotating(true, for: screen.id)
+                case .video(let id): state.assign(id, to: screen.id)
+                }
+            }
+        )
     }
-
-    private var rotating: Bool { state.isRotating(screen.id) }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            HStack(spacing: 8) {
-                Image(systemName: screen.isBuiltIn ? "laptopcomputer" : "display")
-                    .foregroundStyle(.secondary)
-                    .frame(width: 18)
+            HStack(alignment: .center, spacing: 8) {
                 VStack(alignment: .leading, spacing: 1) {
-                    Text(screen.name).font(.callout.weight(.semibold)).lineLimit(1)
-                    Text(subtitle).font(.caption2).foregroundStyle(.secondary)
+                    Text(screen.name).lineLimit(1)
+                    Text(subtitle).font(.caption).foregroundStyle(.secondary)
                 }
-                Spacer()
-            }
-
-            Menu {
-                Toggle(isOn: choice(nil)) {
-                    Label(L("Aus"), systemImage: "nosign")
-                }
-                Toggle(isOn: rotatingBinding) {
-                    Label(L("Alle abwechselnd"), systemImage: "arrow.triangle.2.circlepath")
-                }
-                .disabled(state.library.count < 2)
-                if !state.library.isEmpty { Divider() }
-                ForEach(state.library) { item in
-                    Toggle(isOn: choice(item.id)) {
-                        Label {
-                            Text(item.title)
-                        } icon: {
-                            Image(nsImage: state.menuThumbnail(for: item.id))
-                        }
+                Spacer(minLength: 8)
+                Picker("", selection: selection) {
+                    Text(L("Aus")).tag(VideoChoice.off)
+                    if state.library.count > 1 {
+                        Text(L("Alle abwechselnd")).tag(VideoChoice.rotate)
+                    }
+                    if !state.library.isEmpty { Divider() }
+                    ForEach(state.library) { item in
+                        Text(item.title).tag(VideoChoice.video(item.id))
                     }
                 }
-            } label: {
-                if rotating {
-                    Label(String(format: L("Abwechselnd · %@"), assigned?.title ?? ""),
-                          systemImage: "arrow.triangle.2.circlepath")
-                        .lineLimit(1)
-                        .truncationMode(.middle)
-                } else {
-                    Text(assigned?.title ?? L("Aus"))
-                        .lineLimit(1)
-                        .truncationMode(.middle)
-                }
+                .labelsHidden()
+                .frame(maxWidth: 170)
+                .disabled(state.library.isEmpty)
             }
-            .frame(maxWidth: .infinity)
-            .disabled(state.library.isEmpty)
-
-            HStack(spacing: 6) {
-                BarToggle(title: L("Menüleiste"), icon: "menubar.rectangle",
-                          help: L("Menüleiste auf diesem Monitor ausblenden"),
-                          isOn: optionBinding(\.hideMenuBar))
-                BarToggle(title: L("Dock"), icon: "dock.rectangle",
-                          help: L("Dock auf diesem Monitor ausblenden (wirkt, wenn das Dock dort ist)"),
-                          isOn: optionBinding(\.hideDock))
-                Spacer()
-            }
+            SwitchRow(title: L("Menüleiste ausblenden"),
+                      help: L("Ausgeblendete Leisten kommen zurück, sobald die Maus an den Rand fährt."),
+                      isOn: optionBinding(\.hideMenuBar))
+            SwitchRow(title: L("Dock ausblenden"),
+                      help: L("Dock auf diesem Monitor ausblenden (wirkt, wenn das Dock dort ist)"),
+                      isOn: optionBinding(\.hideDock))
         }
     }
 
@@ -960,19 +759,7 @@ private struct ScreenDetail: View {
         let w = Int(screen.pixelSize.width), h = Int(screen.pixelSize.height)
         var parts = ["\(w) × \(h)"]
         if h > w { parts.append(L("hochkant")) }
-        if screen.isBuiltIn { parts.append("OLED") }
         return parts.joined(separator: " · ")
-    }
-
-    private var rotatingBinding: Binding<Bool> {
-        Binding(get: { rotating }, set: { state.setRotating($0, for: screen.id) })
-    }
-
-    private func choice(_ id: UUID?) -> Binding<Bool> {
-        Binding(
-            get: { !rotating && state.fixedAssignment(for: screen.id) == id },
-            set: { if $0 { state.assign(id, to: screen.id) } }
-        )
     }
 
     private func optionBinding(_ keyPath: WritableKeyPath<ScreenOptions, Bool>) -> Binding<Bool> {
@@ -984,33 +771,6 @@ private struct ScreenDetail: View {
                 state.setOptions(options, for: screen.id)
             }
         )
-    }
-}
-
-private struct BarToggle: View {
-    let title: String
-    let icon: String
-    let help: String
-    @Binding var isOn: Bool
-
-    var body: some View {
-        Button {
-            isOn.toggle()
-        } label: {
-            HStack(spacing: 4) {
-                Image(systemName: isOn ? "eye.slash" : icon)
-                Text(title)
-            }
-            .font(.caption)
-            .padding(.horizontal, 9)
-            .padding(.vertical, 4)
-            .foregroundStyle(isOn ? Color.white : Color.primary.opacity(0.75))
-            .background(Capsule().fill(isOn ? Color.accentColor : Color.primary.opacity(0.07)))
-            .contentShape(Capsule())
-        }
-        .buttonStyle(.plain)
-        .help(help)
-        .animation(.easeOut(duration: 0.15), value: isOn)
     }
 }
 
@@ -1070,13 +830,6 @@ private struct LibraryTile: View {
                             iconButton("trash", help: L("In den Papierkorb legen")) { state.delete(item) }
                         }
                         .padding(4)
-                    } else if usedOn > 0 {
-                        Image(systemName: "checkmark.circle.fill")
-                            .symbolRenderingMode(.palette)
-                            .foregroundStyle(.white, .green)
-                            .font(.system(size: 14))
-                            .padding(5)
-                            .help(usedOn == 1 ? L("Läuft auf 1 Monitor") : String(format: L("Läuft auf %d Monitoren"), usedOn))
                     }
                 }
                 .overlay(alignment: .bottomLeading) {
@@ -1173,6 +926,7 @@ private struct LibraryTile: View {
         if let s = item.fileSize { parts.append(Format.bytes(s)) }
         parts.append(item.generated == true ? L("Erzeugt") : item.sourceURL == nil ? L("Datei") : "YouTube")
         if state.settings.powerSaving && item.ecoFileName != nil { parts.append(L("sparsam")) }
+        if usedOn > 0 { parts.append(L("läuft")) }
         return parts.joined(separator: " · ")
     }
 }
@@ -1191,27 +945,15 @@ private struct FooterView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             if let hint = state.launchAtLoginHint {
-                HintText(text: hint, color: .orange, icon: "exclamationmark.triangle.fill")
+                HintText(text: hint, color: .orange)
             }
             if let update = state.update {
-                Button {
+                Button(String(format: L("Update auf %@ verfügbar"), update.version)) {
                     NSWorkspace.shared.open(update.url)
-                } label: {
-                    Label(String(format: L("Update auf %@ verfügbar"), update.version), systemImage: "arrow.down.circle.fill")
                 }
                 .buttonStyle(.link)
-                .font(.caption)
             }
-            HStack(spacing: 10) {
-                Text("Proledo \(version)")
-                    .font(.caption2)
-                    .foregroundStyle(.tertiary)
-                if state.settings.powerSaving {
-                    Label(L("Stromsparmodus"), systemImage: "leaf.fill")
-                        .font(.caption2)
-                        .foregroundStyle(.green)
-                }
-                Spacer()
+            HStack(spacing: 12) {
                 Menu {
                     Toggle(L("Beim Anmelden starten"), isOn: loginBinding)
                     Toggle(L("Im Akkubetrieb pausieren"), isOn: $state.settings.pauseOnBattery)
@@ -1220,17 +962,18 @@ private struct FooterView: View {
                     Button(L("Videoordner öffnen")) { state.revealInFinder() }
                     Button(L("Proledo auf GitHub")) { NSWorkspace.shared.open(AppState.repositoryURL) }
                 } label: {
-                    Image(systemName: "gearshape")
+                    Text(L("Einstellungen"))
                 }
                 .menuStyle(.borderlessButton)
-                .menuIndicator(.hidden)
                 .fixedSize()
-                .help(L("Einstellungen"))
+                Spacer()
+                Text(version)
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
                 Button(L("Beenden")) { NSApp.terminate(nil) }
+                    .buttonStyle(.borderless)
                     .keyboardShortcut("q")
-                    .buttonStyle(PillButtonStyle(compact: true))
             }
         }
-        .padding(.horizontal, 4)
     }
 }

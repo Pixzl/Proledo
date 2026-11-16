@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.8 – November 16, 2026
+
+- A calmer, more Mac-like menu: plain sections instead of boxes, standard switches and buttons, fewer hints.
+- Playback has a simple on/off switch at the top.
+- Pick a display's video right next to its name. Hiding the menu bar and Dock are regular switches now.
+- Fixed a display tile spilling over the others when a portrait video played on a landscape screen.
+
 ## 0.7.2 – November 16, 2026
 
 - Adding your own file or making a wallpaper now has two proper tiles instead of small text links.
