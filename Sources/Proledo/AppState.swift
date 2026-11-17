@@ -484,7 +484,7 @@ final class AppState: ObservableObject {
     func refreshGeneratorPreview() {
         guard generatorOpen, let screen = generatorScreen else { return }
         let ratio = screen.pixelSize.width / max(screen.pixelSize.height, 1)
-        let short: CGFloat = 300
+        let short: CGFloat = 720
         let size = ratio >= 1 ? (Int(short * ratio), Int(short)) : (Int(short), Int(short / ratio))
         let options = generatorOptions
         previewTask?.cancel()
@@ -492,7 +492,8 @@ final class AppState: ObservableObject {
             try? await Task.sleep(nanoseconds: 120_000_000)
             guard !Task.isCancelled else { return }
             let image = await Task.detached(priority: .userInitiated) {
-                TopoGenerator(width: size.0, height: size.1, options: options).still(at: 0.2)
+                Wallpaper.still(Wallpaper.renderer(width: size.0, height: size.1, options: options),
+                                seconds: options.seconds, at: 0.2)
             }.value
             guard !Task.isCancelled, let self, let image else { return }
             self.generatorPreview = NSImage(cgImage: image, size: NSSize(width: image.width, height: image.height))
@@ -505,7 +506,9 @@ final class AppState: ObservableObject {
         let options = generatorOptions
         let id = UUID()
         let target = Storage.videosDir.appendingPathComponent("\(id.uuidString).mp4")
-        let title = String(format: L("Höhenlinien · %@"), screen.name)
+        let title = options.style == .stars
+            ? String(format: L("Sternenhimmel · %@"), screen.name)
+            : String(format: L("Höhenlinien · %@"), screen.name)
         generatorError = nil
         generatorProgress = 0
         generatorStartedAt = Date()
@@ -514,7 +517,9 @@ final class AppState: ObservableObject {
 
         generateTask = Task { [weak self] in
             let ok = await Task.detached(priority: .utility) {
-                TopoGenerator(width: size.width, height: size.height, options: options).renderVideo(
+                Wallpaper.renderVideo(
+                    Wallpaper.renderer(width: size.width, height: size.height, options: options),
+                    seconds: options.seconds,
                     to: target,
                     progress: { value in Task { @MainActor in self?.generatorProgress = value } },
                     isCancelled: { cancel.isSet }

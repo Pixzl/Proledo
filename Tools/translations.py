@@ -176,6 +176,13 @@ T = {
     "Menüleiste ausblenden": ("Hide menu bar", "Masquer la barre des menus", "Ocultar barra de menús"),
     "Dock ausblenden": ("Hide Dock", "Masquer le Dock", "Ocultar el Dock"),
     "läuft": ("playing", "en cours", "en uso"),
+    "Stil": ("Style", "Style", "Estilo"),
+    "Höhenlinien": ("Contour lines", "Courbes de niveau", "Curvas de nivel"),
+    "Sternenhimmel": ("Starry sky", "Ciel étoilé", "Cielo estrellado"),
+    "Milchstraße": ("Milky Way", "Voie lactée", "Vía Láctea"),
+    "Wenige": ("Few", "Peu", "Pocas"),
+    "Viele": ("Many", "Beaucoup", "Muchas"),
+    "Sternenhimmel · %@": ("Starry sky · %@", "Ciel étoilé · %@", "Cielo estrellado · %@"),
 }
 
 root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

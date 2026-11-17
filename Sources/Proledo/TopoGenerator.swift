@@ -3,6 +3,11 @@ import CoreGraphics
 import Foundation
 
 struct TopoOptions: Equatable {
+    enum Style: String, CaseIterable, Identifiable {
+        case contours = "Höhenlinien", stars = "Sternenhimmel"
+        var id: Self { self }
+    }
+
     enum Density: String, CaseIterable, Identifiable {
         case loose = "Locker", normal = "Normal", dense = "Dicht"
         var id: Self { self }
@@ -18,6 +23,8 @@ struct TopoOptions: Equatable {
         var id: Self { self }
     }
 
+    var style = Style.contours
+    var milkyWay = true
     var density = Density.normal
     var speed = Speed.normal
     var lines = Lines.fine
@@ -27,10 +34,10 @@ struct TopoOptions: Equatable {
     static func randomSeed() -> UInt64 { UInt64.random(in: 1...(UInt64.max >> 2)) }
 }
 
-final class TopoGenerator: @unchecked Sendable {
+final class TopoGenerator: FrameRenderer, @unchecked Sendable {
     let width: Int
     let height: Int
-    let fps = 30
+    let bitRateFactor = 1.0
     let options: TopoOptions
 
     private let cell: Double
@@ -42,7 +49,7 @@ final class TopoGenerator: @unchecked Sendable {
     private let r2: Double
     private let cols: Int
     private let rows: Int
-    private let perm: [Int]
+    private let noiseSource: PerlinNoise
     private let indexEvery = 5
 
     init(width: Int, height: Int, options: TopoOptions) {
@@ -77,40 +84,11 @@ final class TopoGenerator: @unchecked Sendable {
         cols = Int(Double(width) / cell) + 2
         rows = Int(Double(height) / cell) + 2
 
-        var p = Array(0..<256)
-        var state = options.seed
-        for i in stride(from: 255, to: 0, by: -1) {
-            state = state &* 6364136223846793005 &+ 1442695040888963407
-            p.swapAt(i, Int((state >> 33) % UInt64(i + 1)))
-        }
-        perm = (0..<512).map { p[$0 & 255] }
-    }
-
-    @inline(__always) private func fade(_ t: Double) -> Double { t * t * t * (t * (t * 6 - 15) + 10) }
-
-    @inline(__always) private func grad(_ h: Int, _ x: Double, _ y: Double) -> Double {
-        switch h & 7 {
-        case 0: return x + y
-        case 1: return -x + y
-        case 2: return x - y
-        case 3: return -x - y
-        case 4: return x
-        case 5: return -x
-        case 6: return y
-        default: return -y
-        }
+        noiseSource = PerlinNoise(seed: options.seed)
     }
 
     @inline(__always) private func noise(_ x: Double, _ y: Double) -> Double {
-        let xf = floor(x), yf = floor(y)
-        let xi = Int(xf) & 255, yi = Int(yf) & 255
-        let dx = x - xf, dy = y - yf
-        let u = fade(dx), v = fade(dy)
-        let aa = perm[perm[xi] + yi], ab = perm[perm[xi] + yi + 1]
-        let ba = perm[perm[xi + 1] + yi], bb = perm[perm[xi + 1] + yi + 1]
-        let x1 = grad(aa, dx, dy) + u * (grad(ba, dx - 1, dy) - grad(aa, dx, dy))
-        let x2 = grad(ab, dx, dy - 1) + u * (grad(bb, dx - 1, dy - 1) - grad(ab, dx, dy - 1))
-        return x1 + v * (x2 - x1)
+        noiseSource.noise(x, y)
     }
 
     @inline(__always) private func heightAt(_ px: Double, _ py: Double, _ theta: Double) -> Double {
@@ -178,90 +156,7 @@ final class TopoGenerator: @unchecked Sendable {
         }
     }
 
-    private func makeContext(_ data: UnsafeMutableRawPointer?, bytesPerRow: Int) -> CGContext? {
-        CGContext(data: data, width: width, height: height, bitsPerComponent: 8, bytesPerRow: bytesPerRow,
-                  space: CGColorSpace(name: CGColorSpace.sRGB)!,
-                  bitmapInfo: CGImageAlphaInfo.premultipliedFirst.rawValue | CGBitmapInfo.byteOrder32Little.rawValue)
-    }
-
-    func still(at fraction: Double = 0) -> CGImage? {
-        guard let ctx = makeContext(nil, bytesPerRow: 0) else { return nil }
-        render(theta: 2 * .pi * fraction, into: ctx)
-        return ctx.makeImage()
-    }
-
-    func renderVideo(to url: URL, progress: @escaping (Double) -> Void, isCancelled: @escaping () -> Bool) -> Bool {
-        try? FileManager.default.removeItem(at: url)
-        guard let writer = try? AVAssetWriter(outputURL: url, fileType: .mp4) else { return false }
-        let scale = Double(min(width, height)) / 1440
-        let input = AVAssetWriterInput(mediaType: .video, outputSettings: [
-            AVVideoCodecKey: AVVideoCodecType.hevc,
-            AVVideoWidthKey: width,
-            AVVideoHeightKey: height,
-            AVVideoCompressionPropertiesKey: [
-                AVVideoAverageBitRateKey: Int(9_000_000 * pow(scale, 1.5)),
-                AVVideoExpectedSourceFrameRateKey: fps,
-                AVVideoMaxKeyFrameIntervalKey: fps * 2,
-            ],
-        ])
-        input.expectsMediaDataInRealTime = false
-        let adaptor = AVAssetWriterInputPixelBufferAdaptor(assetWriterInput: input, sourcePixelBufferAttributes: [
-            kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA,
-            kCVPixelBufferWidthKey as String: width,
-            kCVPixelBufferHeightKey as String: height,
-        ])
-        guard writer.canAdd(input) else { return false }
-        writer.add(input)
-        guard writer.startWriting() else { return false }
-        writer.startSession(atSourceTime: .zero)
-
-        let total = options.seconds * fps
-        let batch = max(4, ProcessInfo.processInfo.activeProcessorCount)
-        let lock = NSLock()
-        var frame = 0
-        var ok = true
-
-        while frame < total && ok {
-            if isCancelled() { ok = false; break }
-            let count = min(batch, total - frame)
-            var images = [CGImage?](repeating: nil, count: count)
-            let base = frame
-            DispatchQueue.concurrentPerform(iterations: count) { k in
-                guard let ctx = makeContext(nil, bytesPerRow: 0) else { return }
-                render(theta: 2 * .pi * Double(base + k) / Double(total), into: ctx)
-                let image = ctx.makeImage()
-                lock.lock()
-                images[k] = image
-                lock.unlock()
-            }
-            for k in 0..<count {
-                while !input.isReadyForMoreMediaData { usleep(2000) }
-                guard let image = images[k], let pool = adaptor.pixelBufferPool else { ok = false; break }
-                var buffer: CVPixelBuffer?
-                CVPixelBufferPoolCreatePixelBuffer(nil, pool, &buffer)
-                guard let buffer else { ok = false; break }
-                CVPixelBufferLockBaseAddress(buffer, [])
-                let ctx = makeContext(CVPixelBufferGetBaseAddress(buffer), bytesPerRow: CVPixelBufferGetBytesPerRow(buffer))
-                ctx?.draw(image, in: CGRect(x: 0, y: 0, width: width, height: height))
-                CVPixelBufferUnlockBaseAddress(buffer, [])
-                if !adaptor.append(buffer, withPresentationTime: CMTime(value: CMTimeValue(base + k), timescale: CMTimeScale(fps))) {
-                    ok = false
-                    break
-                }
-            }
-            frame += count
-            progress(Double(frame) / Double(total))
-        }
-
-        if !ok {
-            writer.cancelWriting()
-            try? FileManager.default.removeItem(at: url)
-            return false
-        }
-        input.markAsFinished()
-        let done = DispatchSemaphore(value: 0)
-        writer.finishWriting { done.signal() }
-        done.wait()
-        return writer.status == .completed
+    func draw(frame: Int, total: Int, fps: Int, into ctx: CGContext) {
+        render(theta: 2 * .pi * Double(frame) / Double(max(total, 1)), into: ctx)
     }
 }

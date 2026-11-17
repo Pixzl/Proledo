@@ -28,6 +28,7 @@
 "Video als Hintergrund wählen" = "Video als Hintergrund wählen";
 "Kopieren fehlgeschlagen: %@" = "Kopieren fehlgeschlagen: %@";
 "Dieses Videoformat kann der Mac nicht abspielen." = "Dieses Videoformat kann der Mac nicht abspielen.";
+"Sternenhimmel · %@" = "Sternenhimmel · %@";
 "Höhenlinien · %@" = "Höhenlinien · %@";
 "Das Video konnte nicht erzeugt werden." = "Das Video konnte nicht erzeugt werden.";
 "yt-dlp nicht gefunden. Installieren mit: brew install yt-dlp" = "yt-dlp nicht gefunden. Installieren mit: brew install yt-dlp";
@@ -70,13 +71,18 @@
 "Neues Muster" = "Neues Muster";
 "Im Hintergrund weiterrechnen" = "Im Hintergrund weiterrechnen";
 "Schließen" = "Schließen";
+"Stil" = "Stil";
 "Monitor" = "Monitor";
 "Dichte" = "Dichte";
 "Tempo" = "Tempo";
 "Linien" = "Linien";
+"Milchstraße" = "Milchstraße";
 "Länge" = "Länge";
 "%d × %d · nahtlose Schleife · ≈ %@" = "%d × %d · nahtlose Schleife · ≈ %@";
 "Erzeugen" = "Erzeugen";
+"Wenige" = "Wenige";
+"Normal" = "Normal";
+"Viele" = "Viele";
 "wird berechnet…" = "wird berechnet…";
 "noch ca. %@" = "noch ca. %@";
 "Monitore" = "Monitore";
@@ -112,8 +118,9 @@
 "%d Std." = "%d Std.";
 "%d Min." = "%d Min.";
 "%d Sek." = "%d Sek.";
+"Höhenlinien" = "Höhenlinien";
+"Sternenhimmel" = "Sternenhimmel";
 "Locker" = "Locker";
-"Normal" = "Normal";
 "Dicht" = "Dicht";
 "Ruhig" = "Ruhig";
 "Lebhaft" = "Lebhaft";

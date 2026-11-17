@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.9 – November 17, 2026
+
+- New wallpaper style: a starry sky. Stars drift slowly in three layers, a faint Milky Way sits in the background (you can turn it off) and every now and then a shooting star goes by.
+- The wallpaper preview now has the shape of the display you're making it for.
+
 ## 0.8.1 – November 16, 2026
 
 - Proledo now lives at github.com/Pixzl/Proledo. Links and update checks point there.

@@ -460,25 +460,37 @@ private struct GeneratorCard: View {
         .onChange(of: state.generatorScreenID) { _, _ in state.refreshGeneratorPreview() }
     }
 
+    private var previewRatio: CGFloat {
+        guard let screen = state.generatorScreen, screen.pixelSize.height > 0 else { return 16 / 9 }
+        return screen.pixelSize.width / screen.pixelSize.height
+    }
+
     private var preview: some View {
-        ZStack {
-            Color.black
-            if let image = state.generatorPreview {
-                Image(nsImage: image)
-                    .resizable()
-                    .interpolation(.high)
-                    .aspectRatio(contentMode: .fit)
-            } else {
-                ProgressView().controlSize(.small)
+        Color.black
+            .aspectRatio(previewRatio, contentMode: .fit)
+            .overlay {
+                if let image = state.generatorPreview {
+                    Image(nsImage: image)
+                        .resizable()
+                        .interpolation(.high)
+                        .aspectRatio(contentMode: .fill)
+                } else {
+                    ProgressView().controlSize(.small)
+                }
             }
-        }
-        .frame(maxWidth: .infinity)
-        .frame(height: 140)
-        .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+            .frame(maxWidth: .infinity, maxHeight: 190)
     }
 
     private var controls: some View {
         VStack(alignment: .leading, spacing: 8) {
+            row(L("Stil")) {
+                Picker("", selection: $state.generatorOptions.style) {
+                    ForEach(TopoOptions.Style.allCases) { Text(L($0.rawValue)).tag($0) }
+                }
+                .pickerStyle(.segmented)
+                .labelsHidden()
+            }
             row(L("Monitor")) {
                 Picker("", selection: $state.generatorScreenID) {
                     ForEach(state.screens) { screen in
@@ -489,7 +501,7 @@ private struct GeneratorCard: View {
             }
             row(L("Dichte")) {
                 Picker("", selection: $state.generatorOptions.density) {
-                    ForEach(TopoOptions.Density.allCases) { Text(L($0.rawValue)).tag($0) }
+                    ForEach(TopoOptions.Density.allCases) { Text(densityLabel($0)).tag($0) }
                 }
                 .pickerStyle(.segmented)
                 .labelsHidden()
@@ -501,12 +513,21 @@ private struct GeneratorCard: View {
                 .pickerStyle(.segmented)
                 .labelsHidden()
             }
-            row(L("Linien")) {
-                Picker("", selection: $state.generatorOptions.lines) {
-                    ForEach(TopoOptions.Lines.allCases) { Text(L($0.rawValue)).tag($0) }
+            if state.generatorOptions.style == .contours {
+                row(L("Linien")) {
+                    Picker("", selection: $state.generatorOptions.lines) {
+                        ForEach(TopoOptions.Lines.allCases) { Text(L($0.rawValue)).tag($0) }
+                    }
+                    .pickerStyle(.segmented)
+                    .labelsHidden()
                 }
-                .pickerStyle(.segmented)
-                .labelsHidden()
+            } else {
+                row(L("Milchstraße")) {
+                    Toggle("", isOn: $state.generatorOptions.milkyWay)
+                        .labelsHidden()
+                        .toggleStyle(.switch)
+                        .controlSize(.mini)
+                }
             }
             row(L("Länge")) {
                 Picker("", selection: $state.generatorOptions.seconds) {
@@ -544,15 +565,24 @@ private struct GeneratorCard: View {
             Text(title)
                 .font(.callout)
                 .foregroundStyle(.secondary)
-                .frame(width: 64, alignment: .leading)
+                .frame(width: 84, alignment: .leading)
             content()
         }
     }
 
     private func estimatedBytes(_ size: (width: Int, height: Int)) -> Int64 {
-        let scale = Double(min(size.width, size.height)) / 1440
-        let bitRate = 9_000_000 * pow(scale, 1.5)
+        let factor = state.generatorOptions.style == .stars ? 1.3 : 1.0
+        let bitRate = Double(Wallpaper.bitRate(width: size.width, height: size.height, factor: factor))
         return Int64(bitRate * Double(state.generatorOptions.seconds) / 8 * 0.95)
+    }
+
+    private func densityLabel(_ density: TopoOptions.Density) -> String {
+        guard state.generatorOptions.style == .stars else { return L(density.rawValue) }
+        switch density {
+        case .loose: return L("Wenige")
+        case .normal: return L("Normal")
+        case .dense: return L("Viele")
+        }
     }
 
     private func progressView(_ progress: Double) -> some View {

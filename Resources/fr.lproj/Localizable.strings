@@ -28,6 +28,7 @@
 "Video als Hintergrund wählen" = "Choisis une vidéo comme fond d'écran";
 "Kopieren fehlgeschlagen: %@" = "La copie a échoué : %@";
 "Dieses Videoformat kann der Mac nicht abspielen." = "Ton Mac ne peut pas lire ce format vidéo.";
+"Sternenhimmel · %@" = "Ciel étoilé · %@";
 "Höhenlinien · %@" = "Courbes de niveau · %@";
 "Das Video konnte nicht erzeugt werden." = "La vidéo n'a pas pu être créée.";
 "yt-dlp nicht gefunden. Installieren mit: brew install yt-dlp" = "yt-dlp introuvable. Installe-le avec : brew install yt-dlp";
@@ -70,13 +71,18 @@
 "Neues Muster" = "Nouveau motif";
 "Im Hintergrund weiterrechnen" = "Continuer en arrière-plan";
 "Schließen" = "Fermer";
+"Stil" = "Style";
 "Monitor" = "Écran";
 "Dichte" = "Densité";
 "Tempo" = "Vitesse";
 "Linien" = "Lignes";
+"Milchstraße" = "Voie lactée";
 "Länge" = "Durée";
 "%d × %d · nahtlose Schleife · ≈ %@" = "%d × %d · boucle continue · ≈ %@";
 "Erzeugen" = "Créer";
+"Wenige" = "Peu";
+"Normal" = "Normal";
+"Viele" = "Beaucoup";
 "wird berechnet…" = "calcul en cours…";
 "noch ca. %@" = "encore environ %@";
 "Monitore" = "Écrans";
@@ -112,8 +118,9 @@
 "%d Std." = "%d h";
 "%d Min." = "%d min";
 "%d Sek." = "%d s";
+"Höhenlinien" = "Courbes de niveau";
+"Sternenhimmel" = "Ciel étoilé";
 "Locker" = "Aéré";
-"Normal" = "Normal";
 "Dicht" = "Dense";
 "Ruhig" = "Calme";
 "Lebhaft" = "Vif";
