@@ -14,7 +14,7 @@
     <source media="(prefers-color-scheme: dark)" srcset="docs/menu-dark-0.16.png">
     <img src="docs/menu-light-0.16.png" width="400" alt="The Proledo menu with a map of five displays, their settings and rotation">
   </picture>
-  <img src="docs/generator-0.15.png" width="400" alt="Creating a northern lights wallpaper in Proledo">
+  <img src="docs/generator-0.16.png" width="400" alt="Creating a northern lights wallpaper in Proledo">
 </p>
 
 Made for the MacBook Pro with PROLED XDR display, works on any Mac and any external monitor. Proledo lives in your menu bar. Paste a YouTube link, the video gets saved locally and plays as your desktop background. Every monitor can have its own video, or none at all.
