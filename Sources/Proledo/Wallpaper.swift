@@ -1,4 +1,5 @@
 import AVFoundation
+import VideoToolbox
 import CoreGraphics
 import Foundation
 
@@ -6,7 +7,12 @@ protocol FrameRenderer: AnyObject, Sendable {
     var width: Int { get }
     var height: Int { get }
     var bitRateFactor: Double { get }
+    var deepColor: Bool { get }
     func draw(frame: Int, total: Int, fps: Int, into ctx: CGContext)
+}
+
+extension FrameRenderer {
+    var deepColor: Bool { false }
 }
 
 struct PerlinNoise {
@@ -90,6 +96,12 @@ enum Wallpaper {
                   bitmapInfo: CGImageAlphaInfo.premultipliedFirst.rawValue | CGBitmapInfo.byteOrder32Little.rawValue)
     }
 
+    static func makeDeepContext(width: Int, height: Int, data: UnsafeMutableRawPointer? = nil, bytesPerRow: Int = 0) -> CGContext? {
+        CGContext(data: data, width: width, height: height, bitsPerComponent: 16, bytesPerRow: bytesPerRow,
+                  space: CGColorSpace(name: CGColorSpace.sRGB)!,
+                  bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue | CGBitmapInfo.byteOrder16Little.rawValue)
+    }
+
     static func still(_ renderer: FrameRenderer, seconds: Int, at fraction: Double) -> CGImage? {
         guard let ctx = makeContext(width: renderer.width, height: renderer.height) else { return nil }
         let total = seconds * fps
@@ -100,21 +112,32 @@ enum Wallpaper {
     static func renderVideo(_ renderer: FrameRenderer, seconds: Int, to url: URL,
                             progress: @escaping (Double) -> Void, isCancelled: @escaping () -> Bool) -> Bool {
         let width = renderer.width, height = renderer.height
+        let deep = renderer.deepColor
         try? FileManager.default.removeItem(at: url)
         guard let writer = try? AVAssetWriter(outputURL: url, fileType: .mp4) else { return false }
-        let input = AVAssetWriterInput(mediaType: .video, outputSettings: [
+        var compression: [String: Any] = [
+            AVVideoAverageBitRateKey: bitRate(width: width, height: height, factor: renderer.bitRateFactor),
+            AVVideoExpectedSourceFrameRateKey: fps,
+            AVVideoMaxKeyFrameIntervalKey: fps * 2,
+        ]
+        var settings: [String: Any] = [
             AVVideoCodecKey: AVVideoCodecType.hevc,
             AVVideoWidthKey: width,
             AVVideoHeightKey: height,
-            AVVideoCompressionPropertiesKey: [
-                AVVideoAverageBitRateKey: bitRate(width: width, height: height, factor: renderer.bitRateFactor),
-                AVVideoExpectedSourceFrameRateKey: fps,
-                AVVideoMaxKeyFrameIntervalKey: fps * 2,
-            ],
-        ])
+        ]
+        if deep {
+            compression[AVVideoProfileLevelKey] = kVTProfileLevel_HEVC_Main10_AutoLevel as String
+            settings[AVVideoColorPropertiesKey] = [
+                AVVideoColorPrimariesKey: AVVideoColorPrimaries_ITU_R_709_2,
+                AVVideoTransferFunctionKey: AVVideoTransferFunction_ITU_R_709_2,
+                AVVideoYCbCrMatrixKey: AVVideoYCbCrMatrix_ITU_R_709_2,
+            ]
+        }
+        settings[AVVideoCompressionPropertiesKey] = compression
+        let input = AVAssetWriterInput(mediaType: .video, outputSettings: settings)
         input.expectsMediaDataInRealTime = false
         let adaptor = AVAssetWriterInputPixelBufferAdaptor(assetWriterInput: input, sourcePixelBufferAttributes: [
-            kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA,
+            kCVPixelBufferPixelFormatTypeKey as String: deep ? kCVPixelFormatType_64RGBALE : kCVPixelFormatType_32BGRA,
             kCVPixelBufferWidthKey as String: width,
             kCVPixelBufferHeightKey as String: height,
         ])
@@ -135,7 +158,7 @@ enum Wallpaper {
             var images = [CGImage?](repeating: nil, count: count)
             let base = frame
             DispatchQueue.concurrentPerform(iterations: count) { k in
-                guard let ctx = makeContext(width: width, height: height) else { return }
+                guard let ctx = deep ? makeDeepContext(width: width, height: height) : makeContext(width: width, height: height) else { return }
                 renderer.draw(frame: base + k, total: total, fps: fps, into: ctx)
                 let image = ctx.makeImage()
                 lock.lock()
@@ -149,9 +172,9 @@ enum Wallpaper {
                 CVPixelBufferPoolCreatePixelBuffer(nil, pool, &buffer)
                 guard let buffer else { ok = false; break }
                 CVPixelBufferLockBaseAddress(buffer, [])
-                let ctx = makeContext(width: width, height: height,
-                                      data: CVPixelBufferGetBaseAddress(buffer),
-                                      bytesPerRow: CVPixelBufferGetBytesPerRow(buffer))
+                let address = CVPixelBufferGetBaseAddress(buffer), row = CVPixelBufferGetBytesPerRow(buffer)
+                let ctx = deep ? makeDeepContext(width: width, height: height, data: address, bytesPerRow: row)
+                    : makeContext(width: width, height: height, data: address, bytesPerRow: row)
                 ctx?.draw(image, in: CGRect(x: 0, y: 0, width: width, height: height))
                 CVPixelBufferUnlockBaseAddress(buffer, [])
                 if !adaptor.append(buffer, withPresentationTime: CMTime(value: CMTimeValue(base + k), timescale: CMTimeScale(fps))) {

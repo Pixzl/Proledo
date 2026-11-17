@@ -1,5 +1,6 @@
 import AVFoundation
 import Foundation
+import VideoToolbox
 
 enum EcoResult {
     case converted(URL)
@@ -42,9 +43,14 @@ enum EcoConverter {
         let targetFps = fps > maxFrameRate + 1 ? Int32(maxFrameRate) : Int32(max(1, fps.rounded()))
         composition.frameDuration = CMTime(value: 1, timescale: targetFps)
 
+        let descriptions = (try? await track.load(.formatDescriptions)) ?? []
+        let deep = descriptions.contains {
+            (CMFormatDescriptionGetExtension($0, extensionKey: kCMFormatDescriptionExtension_BitsPerComponent) as? Int ?? 8) > 8
+        }
+
         try? FileManager.default.removeItem(at: target)
         let ok = await encode(asset: asset, track: track, composition: composition,
-                              size: renderSize, fps: Int(targetFps), to: target)
+                              size: renderSize, fps: Int(targetFps), deep: deep, to: target)
         guard ok else {
             try? FileManager.default.removeItem(at: target)
             return .failed
@@ -53,14 +59,15 @@ enum EcoConverter {
     }
 
     private static func encode(asset: AVAsset, track: AVAssetTrack, composition: AVVideoComposition,
-                               size: CGSize, fps: Int, to target: URL) async -> Bool {
+                               size: CGSize, fps: Int, deep: Bool, to target: URL) async -> Bool {
         guard let reader = try? AVAssetReader(asset: asset),
               let writer = try? AVAssetWriter(outputURL: target, fileType: .mp4)
         else { return false }
 
         let output = AVAssetReaderVideoCompositionOutput(
             videoTracks: [track],
-            videoSettings: [kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange]
+            videoSettings: [kCVPixelBufferPixelFormatTypeKey as String:
+                                deep ? kCVPixelFormatType_420YpCbCr10BiPlanarVideoRange : kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange]
         )
         output.videoComposition = composition
         output.alwaysCopiesSampleData = false
@@ -68,16 +75,26 @@ enum EcoConverter {
         reader.add(output)
 
         let bitRate = Int(size.width * size.height * Double(fps) * 0.05)
-        let input = AVAssetWriterInput(mediaType: .video, outputSettings: [
+        var compression: [String: Any] = [
+            AVVideoAverageBitRateKey: bitRate,
+            AVVideoExpectedSourceFrameRateKey: fps,
+            AVVideoMaxKeyFrameIntervalKey: fps * 2,
+        ]
+        var settings: [String: Any] = [
             AVVideoCodecKey: AVVideoCodecType.hevc,
             AVVideoWidthKey: Int(size.width),
             AVVideoHeightKey: Int(size.height),
-            AVVideoCompressionPropertiesKey: [
-                AVVideoAverageBitRateKey: bitRate,
-                AVVideoExpectedSourceFrameRateKey: fps,
-                AVVideoMaxKeyFrameIntervalKey: fps * 2,
-            ],
-        ])
+        ]
+        if deep {
+            compression[AVVideoProfileLevelKey] = kVTProfileLevel_HEVC_Main10_AutoLevel as String
+            settings[AVVideoColorPropertiesKey] = [
+                AVVideoColorPrimariesKey: AVVideoColorPrimaries_ITU_R_709_2,
+                AVVideoTransferFunctionKey: AVVideoTransferFunction_ITU_R_709_2,
+                AVVideoYCbCrMatrixKey: AVVideoYCbCrMatrix_ITU_R_709_2,
+            ]
+        }
+        settings[AVVideoCompressionPropertiesKey] = compression
+        let input = AVAssetWriterInput(mediaType: .video, outputSettings: settings)
         input.expectsMediaDataInRealTime = false
         guard writer.canAdd(input) else { return false }
         writer.add(input)

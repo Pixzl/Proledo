@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.16 – November 17, 2026
+
+- Silk looks smoother: the dark shades fade into each other without visible steps.
+- Silk is easier on OLED screens too. The spots that used to light up the most now get a bit less, while the overall look stays the same.
+
 ## 0.15 – November 17, 2026
 
 - The menu is tidier now: displays, library and settings each have their own tab.

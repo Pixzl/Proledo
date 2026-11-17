@@ -350,6 +350,7 @@ final class SilkGenerator: FrameRenderer, @unchecked Sendable {
     let width: Int
     let height: Int
     let bitRateFactor = 1.2
+    let deepColor = true
 
     private let gridWidth: Int
     private let gridHeight: Int
@@ -361,10 +362,16 @@ final class SilkGenerator: FrameRenderer, @unchecked Sendable {
     private let phase: (Double, Double)
     private let light: (Double, Double)
     private let buckets = 8
+    private let options: TopoOptions
+    private let balanced: Bool
+    private let balanceLock = NSLock()
+    private var balance: (map: [Double], width: Int, height: Int)?
 
-    init(width: Int, height: Int, options: TopoOptions) {
+    init(width: Int, height: Int, options: TopoOptions, balanced: Bool = true) {
         self.width = width
         self.height = height
+        self.options = options
+        self.balanced = balanced
         cell = 2
         gridWidth = Int(Double(width) / cell) + 2
         gridHeight = Int(Double(height) / cell) + 2
@@ -384,9 +391,88 @@ final class SilkGenerator: FrameRenderer, @unchecked Sendable {
         light = (cos(angle), sin(angle))
     }
 
+    private func balanceMap(total: Int, fps: Int) -> (map: [Double], width: Int, height: Int)? {
+        guard balanced else { return nil }
+        balanceLock.lock()
+        defer { balanceLock.unlock() }
+        if let balance { return balance }
+        let scale = 270 / Double(min(width, height))
+        let sw = max(16, Int(Double(width) * scale)), sh = max(16, Int(Double(height) * scale))
+        let probe = SilkGenerator(width: sw, height: sh, options: options, balanced: false)
+        let samples = 96
+        var lut = [Double](repeating: 0, count: 256)
+        for i in 0..<256 {
+            let c = Double(i) / 255
+            lut[i] = c <= 0.04045 ? c / 12.92 : pow((c + 0.055) / 1.055, 2.4)
+        }
+        var sum = [Double](repeating: 0, count: sw * sh)
+        let sumLock = NSLock()
+        DispatchQueue.concurrentPerform(iterations: samples) { k in
+            guard let small = Wallpaper.makeContext(width: sw, height: sh), let data = small.data else { return }
+            probe.draw(frame: k * max(total, 1) / samples, total: total, fps: fps, into: small)
+            let pixels = data.assumingMemoryBound(to: UInt8.self)
+            let row = small.bytesPerRow
+            var local = [Double](repeating: 0, count: sw * sh)
+            for y in 0..<sh {
+                for x in 0..<sw { local[y * sw + x] = lut[Int(pixels[y * row + x * 4 + 1])] }
+            }
+            sumLock.lock()
+            for i in 0..<local.count { sum[i] += local[i] }
+            sumLock.unlock()
+        }
+        let radius = max(2, sh / 30)
+        for _ in 0..<3 { sum = Self.boxBlur(sum, width: sw, height: sh, radius: radius) }
+        let peak = sum.max() ?? 0
+        let lit = sum.filter { $0 > peak * 0.05 }.sorted()
+        var map = [Double](repeating: 1, count: sw * sh)
+        if !lit.isEmpty {
+            let cap = lit[Int(Double(lit.count - 1) * 0.7)]
+            var before = 0.0, after = 0.0
+            for i in 0..<map.count {
+                if sum[i] > cap { map[i] = pow(cap / sum[i], 0.45) }
+                before += sum[i]
+                after += sum[i] * pow(map[i], 2.2)
+            }
+            let lift = after > 0 ? min(1.08, pow(before / after, 1 / 2.2)) : 1
+            for i in 0..<map.count { map[i] *= lift }
+        }
+        balance = (map, sw, sh)
+        return balance
+    }
+
+    private static func boxBlur(_ values: [Double], width: Int, height: Int, radius: Int) -> [Double] {
+        var horizontal = [Double](repeating: 0, count: values.count)
+        for y in 0..<height {
+            var acc = 0.0
+            for x in -radius...radius { acc += values[y * width + min(width - 1, max(0, x))] }
+            for x in 0..<width {
+                horizontal[y * width + x] = acc / Double(2 * radius + 1)
+                acc += values[y * width + min(width - 1, x + radius + 1)] - values[y * width + max(0, x - radius)]
+            }
+        }
+        var result = [Double](repeating: 0, count: values.count)
+        for x in 0..<width {
+            var acc = 0.0
+            for y in -radius...radius { acc += horizontal[min(height - 1, max(0, y)) * width + x] }
+            for y in 0..<height {
+                result[y * width + x] = acc / Double(2 * radius + 1)
+                acc += horizontal[min(height - 1, y + radius + 1) * width + x] - horizontal[max(0, y - radius) * width + x]
+            }
+        }
+        return result
+    }
+
     func draw(frame: Int, total: Int, fps: Int, into ctx: CGContext) {
         let theta = 2 * .pi * Double(frame) / Double(max(total, 1))
         let gw = gridWidth, gh = gridHeight
+        let balance = balanceMap(total: total, fps: fps)
+        let cellSize = cell, fullWidth = Double(width), fullHeightValue = Double(height)
+        func gain(_ i: Int, _ j: Int) -> Double {
+            guard let balance else { return 1 }
+            let x = min(balance.width - 1, max(0, Int(Double(i) * cellSize / fullWidth * Double(balance.width))))
+            let y = min(balance.height - 1, max(0, Int(Double(j) * cellSize / fullHeightValue * Double(balance.height))))
+            return balance.map[y * balance.width + x]
+        }
         let minDim = Double(min(gw, gh))
         let centerX = Double(gw) * (0.5 + 0.17 * cos(theta + phase.0))
         let centerY = Double(gh) * (0.5 + 0.13 * sin(2 * theta + phase.1))
@@ -416,9 +502,13 @@ final class SilkGenerator: FrameRenderer, @unchecked Sendable {
             }
         }
 
-        guard let low = Wallpaper.makeContext(width: gw, height: gh), let data = low.data else { return }
+        let deep = ctx.bitsPerComponent > 8
+        guard let low = deep ? Wallpaper.makeDeepContext(width: gw, height: gh) : Wallpaper.makeContext(width: gw, height: gh),
+              let data = low.data else { return }
         let pixels = data.assumingMemoryBound(to: UInt8.self)
+        let wide = data.assumingMemoryBound(to: UInt16.self)
         let bytesPerRow = low.bytesPerRow
+        let seed = UInt64(truncatingIfNeeded: frame) &* 0x9E37_79B9_7F4A_7C15
         let step = levelStep
         let lx = light.0, ly = light.1
 
@@ -446,13 +536,25 @@ final class SilkGenerator: FrameRenderer, @unchecked Sendable {
                     let gloss = 0.17 * exp(-pow((f - 0.8) / 0.1, 2)) * pow(facing, 2.2)
                     let occlusion = min(1, f / 0.28)
                     let groove = 1 - 0.65 * exp(-pow((f - 0.965) / 0.022, 2))
-                    value = (0.006 + body + gloss) * occlusion * occlusion * (3 - 2 * occlusion) * groove * m
+                    value = (0.006 + body + gloss) * occlusion * occlusion * (3 - 2 * occlusion) * groove * m * gain(i, j)
                 }
-                let v = UInt8(min(255, value * 255))
-                pixels[offset] = v
-                pixels[offset + 1] = v
-                pixels[offset + 2] = UInt8(min(255, value * 0.97 * 255))
-                pixels[offset + 3] = 255
+                if deep {
+                    var z = seed ^ (UInt64(index) &* 0xBF58_476D_1CE4_E5B9)
+                    z = (z ^ (z >> 29)) &* 0x94D0_49BB_1331_11EB
+                    let noise = value > 0 ? (Double(z >> 40 & 0xFFFF) + Double(z >> 20 & 0xFFFF)) / 65535 - 1 : 0
+                    let w = j * (bytesPerRow / 2) + i * 4
+                    let level = max(0, min(65535, value * 65535 + noise * 64))
+                    wide[w] = UInt16(level)
+                    wide[w + 1] = UInt16(level)
+                    wide[w + 2] = UInt16(max(0, min(65535, value * 0.97 * 65535 + noise * 64)))
+                    wide[w + 3] = 65535
+                } else {
+                    let v = UInt8(min(255, value * 255))
+                    pixels[offset] = v
+                    pixels[offset + 1] = v
+                    pixels[offset + 2] = UInt8(min(255, value * 0.97 * 255))
+                    pixels[offset + 3] = 255
+                }
             }
         }
 
@@ -477,7 +579,7 @@ final class SilkGenerator: FrameRenderer, @unchecked Sendable {
                 let m = fade[j * gw + i]
                 guard m > 0.02, let g = gradient(i, j) else { continue }
                 let facing = max(0, g.0 * lx + g.1 * ly)
-                let brightness = pow(facing, 1.5) * m
+                let brightness = pow(facing, 1.5) * m * gain(i, j)
                 guard brightness > 0.025 else { continue }
                 let bucket = min(buckets - 1, Int(brightness * Double(buckets)))
                 for k in first...last {
