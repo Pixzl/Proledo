@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.10 – November 17, 2026
+
+- Rotating videos got smarter: landscape displays only rotate through landscape videos and portrait displays through portrait ones, and two displays never show the same video at the same time.
+- Right-click a video in the library to keep it out of the rotation.
+
 ## 0.9 – November 17, 2026
 
 - New wallpaper style: a starry sky. Stars drift slowly in three layers, a faint Milky Way sits in the background (you can turn it off) and every now and then a shooting star goes by.

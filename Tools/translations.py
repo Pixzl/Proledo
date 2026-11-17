@@ -183,6 +183,7 @@ T = {
     "Wenige": ("Few", "Peu", "Pocas"),
     "Viele": ("Many", "Beaucoup", "Muchas"),
     "Sternenhimmel · %@": ("Starry sky · %@", "Ciel étoilé · %@", "Cielo estrellado · %@"),
+    "Beim Abwechseln verwenden": ("Use when rotating", "Utiliser en alternance", "Usar al alternar"),
 }
 
 root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

@@ -922,6 +922,11 @@ private struct LibraryTile: View {
                 Button(String(format: L("Auf %@ zeigen"), screen.name)) { state.assign(item.id, to: screen.id) }
             }
             Divider()
+            Toggle(L("Beim Abwechseln verwenden"), isOn: Binding(
+                get: { item.excludedFromRotation != true },
+                set: { state.setInRotation($0, for: item.id) }
+            ))
+            Divider()
             Button(L("Umbenennen…"), action: startRename)
             Button(L("Im Finder zeigen")) { state.revealInFinder(item) }
             Button(L("In den Papierkorb legen"), role: .destructive) { state.delete(item) }

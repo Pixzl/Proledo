@@ -16,6 +16,9 @@ struct VideoItem: Codable, Identifiable, Hashable {
     var ecoFileName: String?
     var ecoFileSize: Int64?
     var generated: Bool?
+    var width: Int?
+    var height: Int?
+    var excludedFromRotation: Bool?
 
     var fileURL: URL { Storage.videosDir.appendingPathComponent(fileName) }
     var ecoURL: URL? { ecoFileName.map { Storage.videosDir.appendingPathComponent($0) } }

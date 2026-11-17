@@ -172,10 +172,30 @@ final class AppState: ObservableObject {
 
     private func rotatingVideo(for screenID: String) -> UUID? {
         guard !library.isEmpty else { return nil }
+        guard let screen = screens.first(where: { $0.id == screenID }) else { return library.first?.id }
+        let screenPortrait = screen.pixelSize.height > screen.pixelSize.width
+        let pool = library.filter { $0.excludedFromRotation != true }
+        let base = pool.isEmpty ? library : pool
+        let matching = base.filter { isPortrait($0) == screenPortrait }
+        let candidates = matching.isEmpty ? base : matching
         let interval = Double(max(1, settings.rotationMinutes) * 60)
         let step = Int(Date().timeIntervalSince1970 / interval)
-        let offset = screens.firstIndex { $0.id == screenID } ?? 0
-        return library[(step + offset) % library.count].id
+        let siblings = screens.filter { ($0.pixelSize.height > $0.pixelSize.width) == screenPortrait }
+        let offset = siblings.firstIndex { $0.id == screenID } ?? 0
+        return candidates[(step + offset) % candidates.count].id
+    }
+
+    private func isPortrait(_ item: VideoItem) -> Bool? {
+        if let w = item.width, let h = item.height { return h > w }
+        if let image = thumbnails[item.id], image.size.width > 0 { return image.size.height > image.size.width }
+        return nil
+    }
+
+    func setInRotation(_ included: Bool, for id: UUID) {
+        guard let index = library.firstIndex(where: { $0.id == id }) else { return }
+        library[index].excludedFromRotation = included ? nil : true
+        Storage.save(library, to: Storage.libraryFile)
+        applyAll()
     }
 
     func assign(_ videoID: UUID?, to screenID: String) {
@@ -416,10 +436,18 @@ final class AppState: ObservableObject {
         }
         let duration = (try? await asset.load(.duration)).map(\.seconds).flatMap { $0.isFinite ? $0 : nil }
         let size = (try? FileManager.default.attributesOfItem(atPath: file.path)[.size] as? NSNumber)?.int64Value
+        var natural: CGSize?
+        if let track = try? await asset.loadTracks(withMediaType: .video).first {
+            natural = try? await track.load(.naturalSize)
+        }
 
         var item = VideoItem(id: id, title: title, sourceURL: source, fileName: file.lastPathComponent,
                              addedAt: Date(), duration: duration, fileSize: size)
         if generated { item.generated = true }
+        if let natural {
+            item.width = Int(natural.width)
+            item.height = Int(natural.height)
+        }
         if let image = await Self.makeThumbnail(asset: asset, duration: duration ?? 0, to: item.thumbnailURL) {
             thumbnails[id] = image
         }
