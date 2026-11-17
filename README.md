@@ -11,8 +11,8 @@
 
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="docs/menu-dark-0.15.png">
-    <img src="docs/menu-light-0.15.png" width="400" alt="The Proledo menu with a map of five displays, their settings and rotation">
+    <source media="(prefers-color-scheme: dark)" srcset="docs/menu-dark-0.16.png">
+    <img src="docs/menu-light-0.16.png" width="400" alt="The Proledo menu with a map of five displays, their settings and rotation">
   </picture>
   <img src="docs/generator-0.15.png" width="400" alt="Creating a northern lights wallpaper in Proledo">
 </p>
