@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.13 – November 17, 2026
+
+- New wallpaper style: silk. Dark satin layers slowly fold and drift across the screen, with a soft sheen and bright edges. Because the whole thing keeps moving, it's one of the gentlest styles for OLED screens.
+
 ## 0.12 – November 17, 2026
 
 - The northern lights look a lot more real now: fine rays of different lengths, a bright lower edge, a hint of red up high and stars shining through.

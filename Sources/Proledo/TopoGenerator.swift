@@ -4,7 +4,7 @@ import Foundation
 
 struct TopoOptions: Equatable {
     enum Style: String, CaseIterable, Identifiable {
-        case contours = "Höhenlinien", stars = "Sternenhimmel", aurora = "Polarlicht", fireflies = "Glühwürmchen"
+        case contours = "Höhenlinien", stars = "Sternenhimmel", aurora = "Polarlicht", fireflies = "Glühwürmchen", silk = "Seide"
         var id: Self { self }
     }
 

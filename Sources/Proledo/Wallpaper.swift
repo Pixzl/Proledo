@@ -75,6 +75,7 @@ enum Wallpaper {
         case .stars: return StarfieldGenerator(width: width, height: height, options: options)
         case .aurora: return AuroraGenerator(width: width, height: height, options: options)
         case .fireflies: return FireflyGenerator(width: width, height: height, options: options)
+        case .silk: return SilkGenerator(width: width, height: height, options: options)
         }
     }
 

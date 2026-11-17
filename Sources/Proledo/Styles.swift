@@ -345,3 +345,179 @@ final class FireflyGenerator: FrameRenderer, @unchecked Sendable {
         ctx.setBlendMode(.normal)
     }
 }
+
+final class SilkGenerator: FrameRenderer, @unchecked Sendable {
+    let width: Int
+    let height: Int
+    let bitRateFactor = 1.2
+
+    private let gridWidth: Int
+    private let gridHeight: Int
+    private let cell: Double
+    private let noise: PerlinNoise
+    private let radius: Double
+    private let levelStep: Double
+    private let rimWidth: CGFloat
+    private let phase: (Double, Double)
+    private let light: (Double, Double)
+    private let buckets = 8
+
+    init(width: Int, height: Int, options: TopoOptions) {
+        self.width = width
+        self.height = height
+        cell = 2
+        gridWidth = Int(Double(width) / cell) + 2
+        gridHeight = Int(Double(height) / cell) + 2
+        noise = PerlinNoise(seed: options.seed)
+        var random = SeededRandom(seed: options.seed ^ 0x51C0_51C0)
+        let distance = 0.045 * speedFactor(options.speed) * Double(options.seconds)
+        radius = distance / (2 * .pi)
+        switch options.density {
+        case .loose: levelStep = 0.34
+        case .normal: levelStep = 0.25
+        case .dense: levelStep = 0.17
+        }
+        let unit = Double(min(width, height)) / 1440
+        rimWidth = CGFloat((options.lines == .bold ? 2.4 : 1.6) * unit)
+        phase = (random.unit() * 2 * .pi, random.unit() * 2 * .pi)
+        let angle = (200 + random.unit() * 40) * .pi / 180
+        light = (cos(angle), sin(angle))
+    }
+
+    func draw(frame: Int, total: Int, fps: Int, into ctx: CGContext) {
+        let theta = 2 * .pi * Double(frame) / Double(max(total, 1))
+        let gw = gridWidth, gh = gridHeight
+        let minDim = Double(min(gw, gh))
+        let centerX = Double(gw) * (0.5 + 0.17 * cos(theta + phase.0))
+        let centerY = Double(gh) * (0.5 + 0.13 * sin(2 * theta + phase.1))
+        let blob = minDim * 0.62
+        let mx = radius * cos(theta), my = radius * sin(theta)
+
+        let field = UnsafeMutableBufferPointer<Double>.allocate(capacity: gw * gh)
+        let fade = UnsafeMutableBufferPointer<Double>.allocate(capacity: gw * gh)
+        defer { field.deallocate(); fade.deallocate() }
+
+        DispatchQueue.concurrentPerform(iterations: gh) { j in
+            for i in 0..<gw {
+                let dx = (Double(i) - centerX) / blob, dy = (Double(j) - centerY) / blob
+                let r = sqrt(dx * dx + dy * dy)
+                let index = j * gw + i
+                guard r < 1.3 else { field[index] = .nan; fade[index] = 0; continue }
+                let qx = noise.noise(dx * 0.7 + mx + 3.1, dy * 0.7 + my - 1.7)
+                let qy = noise.noise(dx * 0.7 - my + 7.7, dy * 0.7 + mx + 2.9)
+                let a = atan2(dy, dx)
+                let swirl = min(1, r * 2.5)
+                field[index] = r * 2.1
+                    + 1.15 * noise.noise(dx * 0.75 + 2.4 * qx + mx * 0.6, dy * 0.75 + 2.4 * qy + my * 0.6)
+                    + 0.35 * swirl * sin(2 * a + 2.6 * qx + theta)
+                let edge = 1.12 + 0.28 * noise.noise(dx * 0.9 + 10 + mx * 0.5, dy * 0.9 - 4 + my * 0.5)
+                let m = max(0, min(1, (edge - r) / 0.42))
+                fade[index] = m * m * (3 - 2 * m)
+            }
+        }
+
+        guard let low = Wallpaper.makeContext(width: gw, height: gh), let data = low.data else { return }
+        let pixels = data.assumingMemoryBound(to: UInt8.self)
+        let bytesPerRow = low.bytesPerRow
+        let step = levelStep
+        let lx = light.0, ly = light.1
+
+        func gradient(_ i: Int, _ j: Int) -> (Double, Double)? {
+            let i0 = max(0, i - 1), i1 = min(gw - 1, i + 1), j0 = max(0, j - 1), j1 = min(gh - 1, j + 1)
+            let a = field[j * gw + i1], b = field[j * gw + i0], c = field[j1 * gw + i], d = field[j0 * gw + i]
+            guard !a.isNaN, !b.isNaN, !c.isNaN, !d.isNaN else { return nil }
+            let gx = (a - b) / Double(i1 - i0), gy = (c - d) / Double(j1 - j0)
+            let length = sqrt(gx * gx + gy * gy)
+            guard length > 1e-9 else { return nil }
+            return (gx / length, gy / length)
+        }
+
+        DispatchQueue.concurrentPerform(iterations: gh) { j in
+            for i in 0..<gw {
+                let index = j * gw + i
+                let offset = j * bytesPerRow + i * 4
+                let h = field[index], m = fade[index]
+                var value = 0.0
+                if !h.isNaN, m > 0, let g = gradient(i, j) {
+                    let f = h / step - floor(h / step)
+                    let facing = 0.5 + 0.5 * (g.0 * lx + g.1 * ly)
+                    let shade = 0.15 + 0.85 * facing
+                    let body = 0.09 * pow(f, 1.4) * shade
+                    let gloss = 0.17 * exp(-pow((f - 0.8) / 0.1, 2)) * pow(facing, 2.2)
+                    let occlusion = min(1, f / 0.28)
+                    let groove = 1 - 0.65 * exp(-pow((f - 0.965) / 0.022, 2))
+                    value = (0.006 + body + gloss) * occlusion * occlusion * (3 - 2 * occlusion) * groove * m
+                }
+                let v = UInt8(min(255, value * 255))
+                pixels[offset] = v
+                pixels[offset + 1] = v
+                pixels[offset + 2] = UInt8(min(255, value * 0.97 * 255))
+                pixels[offset + 3] = 255
+            }
+        }
+
+        ctx.setFillColor(CGColor(gray: 0, alpha: 1))
+        ctx.fill(CGRect(x: 0, y: 0, width: width, height: height))
+        if let image = low.makeImage() {
+            ctx.interpolationQuality = .high
+            ctx.draw(image, in: CGRect(x: 0, y: Double(height) - Double(gh) * cell, width: Double(gw) * cell, height: Double(gh) * cell))
+        }
+
+        var paths = (0..<buckets).map { _ in CGMutablePath() }
+        let fullHeight = Double(height)
+        let c = cell
+        for j in 0..<(gh - 1) {
+            for i in 0..<(gw - 1) {
+                let a = field[j * gw + i], b = field[j * gw + i + 1]
+                let cc = field[(j + 1) * gw + i + 1], d = field[(j + 1) * gw + i]
+                if a.isNaN || b.isNaN || cc.isNaN || d.isNaN { continue }
+                let lo = min(min(a, b), min(cc, d)), hi = max(max(a, b), max(cc, d))
+                let first = Int(floor(lo / step)) + 1, last = Int(floor(hi / step))
+                guard first <= last else { continue }
+                let m = fade[j * gw + i]
+                guard m > 0.02, let g = gradient(i, j) else { continue }
+                let facing = max(0, g.0 * lx + g.1 * ly)
+                let brightness = pow(facing, 1.5) * m
+                guard brightness > 0.025 else { continue }
+                let bucket = min(buckets - 1, Int(brightness * Double(buckets)))
+                for k in first...last {
+                    let level = Double(k) * step
+                    var idx = 0
+                    if a > level { idx |= 1 }
+                    if b > level { idx |= 2 }
+                    if cc > level { idx |= 4 }
+                    if d > level { idx |= 8 }
+                    if idx == 0 || idx == 15 { continue }
+                    let x0 = Double(i) * c, y0 = Double(j) * c
+                    func point(_ x: Double, _ y: Double) -> CGPoint { CGPoint(x: x, y: fullHeight - y) }
+                    let top = point(x0 + (level - a) / (b - a) * c, y0)
+                    let right = point(x0 + c, y0 + (level - b) / (cc - b) * c)
+                    let bottom = point(x0 + (level - d) / (cc - d) * c, y0 + c)
+                    let left = point(x0, y0 + (level - a) / (d - a) * c)
+                    func segment(_ p: CGPoint, _ q: CGPoint) { paths[bucket].move(to: p); paths[bucket].addLine(to: q) }
+                    switch idx {
+                    case 1, 14: segment(left, top)
+                    case 2, 13: segment(top, right)
+                    case 3, 12: segment(left, right)
+                    case 4, 11: segment(right, bottom)
+                    case 6, 9: segment(top, bottom)
+                    case 7, 8: segment(left, bottom)
+                    case 5: segment(left, top); segment(right, bottom)
+                    case 10: segment(top, right); segment(left, bottom)
+                    default: break
+                    }
+                }
+            }
+        }
+        ctx.setLineCap(.round)
+        ctx.setLineJoin(.round)
+        ctx.setLineWidth(rimWidth)
+        for (index, path) in paths.enumerated() where !path.isEmpty {
+            let v = CGFloat((Double(index) + 0.5) / Double(buckets))
+            ctx.setStrokeColor(CGColor(red: v, green: v, blue: v * 0.98, alpha: 1))
+            ctx.addPath(path)
+            ctx.strokePath()
+        }
+        paths.removeAll()
+    }
+}

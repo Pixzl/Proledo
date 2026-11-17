@@ -188,6 +188,7 @@ T = {
     "Glühwürmchen": ("Fireflies", "Lucioles", "Luciérnagas"),
     "Berge": ("Mountains", "Montagnes", "Montañas"),
     "Zart": ("Subtle", "Discrète", "Suave"),
+    "Seide": ("Silk", "Soie", "Seda"),
 }
 
 root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

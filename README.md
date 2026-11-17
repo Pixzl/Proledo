@@ -29,7 +29,7 @@ Made for the MacBook Pro with PROLED XDR display, works on any Mac and any exter
 - Has a power saving mode that plays a lighter 30 fps copy of each video
 - Never keeps your screen awake
 - Works with your own video files too
-- Creates its own wallpapers as seamless loops sized for each display: contour lines, starry sky, northern lights or fireflies
+- Creates its own wallpapers as seamless loops sized for each display: contour lines, starry sky, northern lights, fireflies or silk
 - Available in English, German, French and Spanish
 
 ## Make your own
@@ -54,10 +54,16 @@ Proledo can draw wallpapers for you, sized for the exact display you pick. They 
   <img src="docs/aurora-0.12.jpg" width="820" alt="A northern lights wallpaper made by Proledo">
 </p>
 
-**Fireflies:** little lights drifting over a meadow and flashing up one by one. The lightest on your screen of all four.
+**Fireflies:** little lights drifting over a meadow and flashing up one by one. The lightest on your screen of all styles.
 
 <p align="center">
   <img src="docs/fireflies-0.12.jpg" width="820" alt="A fireflies wallpaper made by Proledo">
+</p>
+
+**Silk:** dark satin layers slowly folding and drifting across the screen, with a soft sheen and bright edges.
+
+<p align="center">
+  <img src="docs/silk-0.13.jpg" width="820" alt="A silk wallpaper made by Proledo">
 </p>
 
 ## Install

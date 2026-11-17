@@ -514,7 +514,7 @@ private struct GeneratorCard: View {
                 .labelsHidden()
             }
             switch state.generatorOptions.style {
-            case .contours:
+            case .contours, .silk:
                 row(L("Linien")) {
                     Picker("", selection: $state.generatorOptions.lines) {
                         ForEach(TopoOptions.Lines.allCases) { Text(L($0.rawValue)).tag($0) }
@@ -588,7 +588,7 @@ private struct GeneratorCard: View {
 
     private func densityLabel(_ density: TopoOptions.Density) -> String {
         switch (state.generatorOptions.style, density) {
-        case (.contours, _): return L(density.rawValue)
+        case (.contours, _), (.silk, _): return L(density.rawValue)
         case (.aurora, .loose): return L("Zart")
         case (.aurora, .dense): return L("Kräftig")
         case (_, .loose): return L("Wenige")
