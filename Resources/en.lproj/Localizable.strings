@@ -28,8 +28,6 @@
 "Video als Hintergrund wählen" = "Choose a video for your wallpaper";
 "Kopieren fehlgeschlagen: %@" = "Copying failed: %@";
 "Dieses Videoformat kann der Mac nicht abspielen." = "Your Mac can't play this video format.";
-"Sternenhimmel · %@" = "Starry sky · %@";
-"Höhenlinien · %@" = "Contour lines · %@";
 "Das Video konnte nicht erzeugt werden." = "The video couldn't be created.";
 "yt-dlp nicht gefunden. Installieren mit: brew install yt-dlp" = "yt-dlp not found. Install it with: brew install yt-dlp";
 "Video konnte nicht gelesen werden." = "Couldn't read the video.";
@@ -77,12 +75,15 @@
 "Tempo" = "Speed";
 "Linien" = "Lines";
 "Milchstraße" = "Milky Way";
+"Berge" = "Mountains";
 "Länge" = "Length";
 "%d × %d · nahtlose Schleife · ≈ %@" = "%d × %d · seamless loop · ≈ %@";
 "Erzeugen" = "Create";
+"Zart" = "Subtle";
+"Kräftig" = "Bold";
 "Wenige" = "Few";
-"Normal" = "Normal";
 "Viele" = "Many";
+"Normal" = "Normal";
 "wird berechnet…" = "calculating…";
 "noch ca. %@" = "about %@ left";
 "Monitore" = "Displays";
@@ -121,9 +122,10 @@
 "%d Sek." = "%d sec";
 "Höhenlinien" = "Contour lines";
 "Sternenhimmel" = "Starry sky";
+"Polarlicht" = "Northern lights";
+"Glühwürmchen" = "Fireflies";
 "Locker" = "Loose";
 "Dicht" = "Dense";
 "Ruhig" = "Calm";
 "Lebhaft" = "Lively";
 "Fein" = "Fine";
-"Kräftig" = "Bold";

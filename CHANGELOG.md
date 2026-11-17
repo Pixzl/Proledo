@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.11 – November 17, 2026
+
+- Two new wallpaper styles: northern lights swaying over a dark mountain ridge, and fireflies drifting around and glowing up one by one.
+- The style is now picked from a menu, so there's room for more.
+
 ## 0.10 – November 17, 2026
 
 - Rotating videos got smarter: landscape displays only rotate through landscape videos and portrait displays through portrait ones, and two displays never show the same video at the same time.

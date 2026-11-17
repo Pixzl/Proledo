@@ -488,8 +488,8 @@ private struct GeneratorCard: View {
                 Picker("", selection: $state.generatorOptions.style) {
                     ForEach(TopoOptions.Style.allCases) { Text(L($0.rawValue)).tag($0) }
                 }
-                .pickerStyle(.segmented)
                 .labelsHidden()
+                .fixedSize()
             }
             row(L("Monitor")) {
                 Picker("", selection: $state.generatorScreenID) {
@@ -513,7 +513,8 @@ private struct GeneratorCard: View {
                 .pickerStyle(.segmented)
                 .labelsHidden()
             }
-            if state.generatorOptions.style == .contours {
+            switch state.generatorOptions.style {
+            case .contours:
                 row(L("Linien")) {
                     Picker("", selection: $state.generatorOptions.lines) {
                         ForEach(TopoOptions.Lines.allCases) { Text(L($0.rawValue)).tag($0) }
@@ -521,13 +522,22 @@ private struct GeneratorCard: View {
                     .pickerStyle(.segmented)
                     .labelsHidden()
                 }
-            } else {
+            case .stars:
                 row(L("Milchstraße")) {
                     Toggle("", isOn: $state.generatorOptions.milkyWay)
                         .labelsHidden()
                         .toggleStyle(.switch)
                         .controlSize(.mini)
                 }
+            case .aurora:
+                row(L("Berge")) {
+                    Toggle("", isOn: $state.generatorOptions.landscape)
+                        .labelsHidden()
+                        .toggleStyle(.switch)
+                        .controlSize(.mini)
+                }
+            case .fireflies:
+                EmptyView()
             }
             row(L("Länge")) {
                 Picker("", selection: $state.generatorOptions.seconds) {
@@ -577,11 +587,13 @@ private struct GeneratorCard: View {
     }
 
     private func densityLabel(_ density: TopoOptions.Density) -> String {
-        guard state.generatorOptions.style == .stars else { return L(density.rawValue) }
-        switch density {
-        case .loose: return L("Wenige")
-        case .normal: return L("Normal")
-        case .dense: return L("Viele")
+        switch (state.generatorOptions.style, density) {
+        case (.contours, _): return L(density.rawValue)
+        case (.aurora, .loose): return L("Zart")
+        case (.aurora, .dense): return L("Kräftig")
+        case (_, .loose): return L("Wenige")
+        case (_, .dense): return L("Viele")
+        case (_, .normal): return L("Normal")
         }
     }
 

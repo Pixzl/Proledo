@@ -4,7 +4,7 @@ import Foundation
 
 struct TopoOptions: Equatable {
     enum Style: String, CaseIterable, Identifiable {
-        case contours = "Höhenlinien", stars = "Sternenhimmel"
+        case contours = "Höhenlinien", stars = "Sternenhimmel", aurora = "Polarlicht", fireflies = "Glühwürmchen"
         var id: Self { self }
     }
 
@@ -25,6 +25,7 @@ struct TopoOptions: Equatable {
 
     var style = Style.contours
     var milkyWay = true
+    var landscape = true
     var density = Density.normal
     var speed = Speed.normal
     var lines = Lines.fine

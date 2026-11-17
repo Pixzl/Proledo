@@ -28,8 +28,6 @@
 "Video als Hintergrund wählen" = "Choisis une vidéo comme fond d'écran";
 "Kopieren fehlgeschlagen: %@" = "La copie a échoué : %@";
 "Dieses Videoformat kann der Mac nicht abspielen." = "Ton Mac ne peut pas lire ce format vidéo.";
-"Sternenhimmel · %@" = "Ciel étoilé · %@";
-"Höhenlinien · %@" = "Courbes de niveau · %@";
 "Das Video konnte nicht erzeugt werden." = "La vidéo n'a pas pu être créée.";
 "yt-dlp nicht gefunden. Installieren mit: brew install yt-dlp" = "yt-dlp introuvable. Installe-le avec : brew install yt-dlp";
 "Video konnte nicht gelesen werden." = "Impossible de lire la vidéo.";
@@ -77,12 +75,15 @@
 "Tempo" = "Vitesse";
 "Linien" = "Lignes";
 "Milchstraße" = "Voie lactée";
+"Berge" = "Montagnes";
 "Länge" = "Durée";
 "%d × %d · nahtlose Schleife · ≈ %@" = "%d × %d · boucle continue · ≈ %@";
 "Erzeugen" = "Créer";
+"Zart" = "Discrète";
+"Kräftig" = "Épaisses";
 "Wenige" = "Peu";
-"Normal" = "Normal";
 "Viele" = "Beaucoup";
+"Normal" = "Normal";
 "wird berechnet…" = "calcul en cours…";
 "noch ca. %@" = "encore environ %@";
 "Monitore" = "Écrans";
@@ -121,9 +122,10 @@
 "%d Sek." = "%d s";
 "Höhenlinien" = "Courbes de niveau";
 "Sternenhimmel" = "Ciel étoilé";
+"Polarlicht" = "Aurore boréale";
+"Glühwürmchen" = "Lucioles";
 "Locker" = "Aéré";
 "Dicht" = "Dense";
 "Ruhig" = "Calme";
 "Lebhaft" = "Vif";
 "Fein" = "Fines";
-"Kräftig" = "Épaisses";

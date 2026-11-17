@@ -534,9 +534,7 @@ final class AppState: ObservableObject {
         let options = generatorOptions
         let id = UUID()
         let target = Storage.videosDir.appendingPathComponent("\(id.uuidString).mp4")
-        let title = options.style == .stars
-            ? String(format: L("Sternenhimmel · %@"), screen.name)
-            : String(format: L("Höhenlinien · %@"), screen.name)
+        let title = "\(L(options.style.rawValue)) · \(screen.name)"
         generatorError = nil
         generatorProgress = 0
         generatorStartedAt = Date()

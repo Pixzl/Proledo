@@ -73,6 +73,8 @@ enum Wallpaper {
         switch options.style {
         case .contours: return TopoGenerator(width: width, height: height, options: options)
         case .stars: return StarfieldGenerator(width: width, height: height, options: options)
+        case .aurora: return AuroraGenerator(width: width, height: height, options: options)
+        case .fireflies: return FireflyGenerator(width: width, height: height, options: options)
         }
     }
 
