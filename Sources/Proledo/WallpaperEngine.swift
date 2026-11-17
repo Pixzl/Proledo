@@ -8,6 +8,7 @@ final class WallpaperEngine {
     private var playbackAllowed = true
 
     var screensWithStrips: Set<String> = []
+    var coveredScreens: Set<String> = []
     var onPlayersChanged: (() -> Void)?
 
     func player(for screenID: String) -> AVPlayer? {
@@ -45,7 +46,7 @@ final class WallpaperEngine {
 
     func updatePlayback() {
         for (id, window) in windows {
-            let visible = window.isVisibleOnScreen || screensWithStrips.contains(id)
+            let visible = window.isVisibleOnScreen || screensWithStrips.contains(id) || coveredScreens.contains(id)
             window.setPlaying(playbackAllowed && visible)
         }
     }

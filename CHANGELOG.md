@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.14 – November 17, 2026
+
+- Proledo can now cover a screen completely when you've been away for a few minutes, windows included. Move the mouse and it's gone. Turn it on per display.
+- The generator can make a video for every display at once, each in the right size, and sets them up right away.
+- Rotation can stick to one style, so all your screens look the same.
+
 ## 0.13 – November 17, 2026
 
 - New wallpaper style: silk. Dark satin layers slowly fold and drift across the screen, with a soft sheen and bright edges. Because the whole thing keeps moving, it's one of the gentlest styles for OLED screens.

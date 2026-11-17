@@ -19,6 +19,7 @@ struct VideoItem: Codable, Identifiable, Hashable {
     var width: Int?
     var height: Int?
     var excludedFromRotation: Bool?
+    var style: String?
 
     var fileURL: URL { Storage.videosDir.appendingPathComponent(fileName) }
     var ecoURL: URL? { ecoFileName.map { Storage.videosDir.appendingPathComponent($0) } }
@@ -29,6 +30,7 @@ struct VideoItem: Codable, Identifiable, Hashable {
 struct ScreenOptions: Codable, Equatable {
     var hideMenuBar = false
     var hideDock = false
+    var idleCover = false
 
     init() {}
 
@@ -36,6 +38,7 @@ struct ScreenOptions: Codable, Equatable {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         hideMenuBar = try c.decodeIfPresent(Bool.self, forKey: .hideMenuBar) ?? false
         hideDock = try c.decodeIfPresent(Bool.self, forKey: .hideDock) ?? false
+        idleCover = try c.decodeIfPresent(Bool.self, forKey: .idleCover) ?? false
     }
 }
 
@@ -47,6 +50,8 @@ struct Settings: Codable, Equatable {
     var powerSaving = false
     var rotatingScreens: [String] = []
     var rotationMinutes = 30
+    var rotationStyle: String?
+    var idleMinutes = 5
 
     init() {}
 
@@ -59,6 +64,8 @@ struct Settings: Codable, Equatable {
         powerSaving = try c.decodeIfPresent(Bool.self, forKey: .powerSaving) ?? false
         rotatingScreens = try c.decodeIfPresent([String].self, forKey: .rotatingScreens) ?? []
         rotationMinutes = try c.decodeIfPresent(Int.self, forKey: .rotationMinutes) ?? 30
+        rotationStyle = try c.decodeIfPresent(String.self, forKey: .rotationStyle)
+        idleMinutes = try c.decodeIfPresent(Int.self, forKey: .idleMinutes) ?? 5
     }
 }
 

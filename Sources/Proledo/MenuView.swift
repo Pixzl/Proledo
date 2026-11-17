@@ -493,6 +493,10 @@ private struct GeneratorCard: View {
             }
             row(L("Monitor")) {
                 Picker("", selection: $state.generatorScreenID) {
+                    if state.screens.count > 1 {
+                        Text(L("Alle Monitore")).tag(Optional(AppState.allScreensID))
+                        Divider()
+                    }
                     ForEach(state.screens) { screen in
                         Text(screen.name).tag(Optional(screen.id))
                     }
@@ -547,7 +551,11 @@ private struct GeneratorCard: View {
                 .labelsHidden()
             }
 
-            if let screen = state.generatorScreen {
+            let targets = state.generatorTargets
+            if targets.count > 1 {
+                let total = targets.reduce(Int64(0)) { $0 + estimatedBytes(state.generatorSize(for: $1)) }
+                HintText(text: String(format: L("%d Videos · nahtlose Schleifen · ≈ %@"), targets.count, Format.bytes(total)))
+            } else if let screen = targets.first {
                 let size = state.generatorSize(for: screen)
                 HintText(text: String(format: L("%d × %d · nahtlose Schleife · ≈ %@"), size.width, size.height,
                                       Format.bytes(estimatedBytes(size))))
@@ -670,6 +678,21 @@ private struct ScreensCard: View {
                     }
                     .labelsHidden()
                     .fixedSize()
+                }
+                if !state.libraryStyles.isEmpty {
+                    HStack {
+                        Text(L("Stil"))
+                        Spacer()
+                        Picker("", selection: $state.settings.rotationStyle) {
+                            Text(L("Alle Stile")).tag(String?.none)
+                            Divider()
+                            ForEach(state.libraryStyles) { style in
+                                Text(L(style.rawValue)).tag(Optional(style.rawValue))
+                            }
+                        }
+                        .labelsHidden()
+                        .fixedSize()
+                    }
                 }
             }
             if state.library.isEmpty {
@@ -794,6 +817,9 @@ private struct ScreenDetail: View {
             SwitchRow(title: L("Dock ausblenden"),
                       help: L("Dock auf diesem Monitor ausblenden (wirkt, wenn das Dock dort ist)"),
                       isOn: optionBinding(\.hideDock))
+            SwitchRow(title: L("Bei Abwesenheit abdecken"),
+                      help: L("Deckt den ganzen Bildschirm samt Fenstern ab, wenn du eine Weile nichts tust. Eine Mausbewegung gibt ihn sofort frei."),
+                      isOn: optionBinding(\.idleCover))
         }
     }
 
@@ -1005,6 +1031,11 @@ private struct FooterView: View {
                     Toggle(L("Beim Anmelden starten"), isOn: loginBinding)
                     Toggle(L("Im Akkubetrieb pausieren"), isOn: $state.settings.pauseOnBattery)
                     Toggle(L("Stromsparmodus (30 fps, max. 1440p)"), isOn: $state.settings.powerSaving)
+                    Picker(L("Abdecken nach"), selection: $state.settings.idleMinutes) {
+                        ForEach([2, 5, 10, 15], id: \.self) { minutes in
+                            Text(Format.readableDuration(Double(minutes * 60))).tag(minutes)
+                        }
+                    }
                     Divider()
                     Button(L("Videoordner öffnen")) { state.revealInFinder() }
                     Button(L("Proledo auf GitHub")) { NSWorkspace.shared.open(AppState.repositoryURL) }

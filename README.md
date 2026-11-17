@@ -28,13 +28,14 @@ Made for the MacBook Pro with PROLED XDR display, works on any Mac and any exter
 - Pauses on its own when the desktop is covered, the Mac is locked or running on battery
 - Has a power saving mode that plays a lighter 30 fps copy of each video
 - Never keeps your screen awake
+- Covers the whole screen, windows and all, when you step away, and clears it the moment you're back
 - Works with your own video files too
-- Creates its own wallpapers as seamless loops sized for each display: contour lines, starry sky, northern lights, fireflies or silk
+- Creates its own wallpapers as seamless loops sized for each display: contour lines, starry sky, northern lights, fireflies or silk, for one display or all of them at once
 - Available in English, German, French and Spanish
 
 ## Make your own
 
-Proledo can draw wallpapers for you, sized for the exact display you pick. They loop without a visible jump and have no watermark, so nothing on screen stays still.
+Proledo can draw wallpapers for you, sized for the exact display you pick. They loop without a visible jump and have no watermark, so nothing on screen stays still. Pick "All displays" and every monitor gets its own video in its exact size, and rotation can stick to one style so everything matches.
 
 **Contour lines:** white lines slowly flowing over black.
 

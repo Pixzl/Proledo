@@ -35,6 +35,7 @@ final class AppState: ObservableObject {
 
     private let engine = WallpaperEngine()
     private let bars = BarOverlayController()
+    private let idle = IdleGuard()
     private let downloader = Downloader()
     private let power = PowerMonitor()
     private var infoTask: Task<Void, Never>?
@@ -50,7 +51,15 @@ final class AppState: ObservableObject {
 
     func start() {
         power.onChange = { [weak self] in self?.applyAll() }
-        engine.onPlayersChanged = { [weak self] in self?.applyBars() }
+        engine.onPlayersChanged = { [weak self] in
+            self?.applyBars()
+            self?.idle.refreshPlayers()
+        }
+        idle.onChange = { [weak self] in
+            guard let self else { return }
+            self.engine.coveredScreens = self.idle.coveredScreens
+            self.engine.updatePlayback()
+        }
         power.start()
 
         NotificationCenter.default.addObserver(
@@ -74,6 +83,7 @@ final class AppState: ObservableObject {
         downloader.cancelInfo()
         engine.tearDown()
         bars.tearDown()
+        idle.tearDown()
     }
 
     @Published private(set) var launchAtLogin = SMAppService.mainApp.status == .enabled
@@ -174,7 +184,12 @@ final class AppState: ObservableObject {
         guard !library.isEmpty else { return nil }
         guard let screen = screens.first(where: { $0.id == screenID }) else { return library.first?.id }
         let screenPortrait = screen.pixelSize.height > screen.pixelSize.width
-        let pool = library.filter { $0.excludedFromRotation != true }
+        let pool: [VideoItem]
+        if let style = settings.rotationStyle, library.contains(where: { $0.style == style }) {
+            pool = library.filter { $0.style == style }
+        } else {
+            pool = library.filter { $0.excludedFromRotation != true }
+        }
         let base = pool.isEmpty ? library : pool
         let matching = base.filter { isPortrait($0) == screenPortrait }
         let candidates = matching.isEmpty ? base : matching
@@ -189,6 +204,11 @@ final class AppState: ObservableObject {
         if let w = item.width, let h = item.height { return h > w }
         if let image = thumbnails[item.id], image.size.width > 0 { return image.size.height > image.size.width }
         return nil
+    }
+
+    var libraryStyles: [TopoOptions.Style] {
+        let present = Set(library.compactMap(\.style))
+        return TopoOptions.Style.allCases.filter { present.contains($0.rawValue) }
     }
 
     func setInRotation(_ included: Bool, for id: UUID) {
@@ -280,6 +300,9 @@ final class AppState: ObservableObject {
         pauseReason = currentPauseReason()
         engine.screensWithStrips = Set(settings.screenOptions.filter { $0.value.hideMenuBar || $0.value.hideDock }.keys)
         engine.apply(desired: desired, playbackAllowed: pauseReason == nil)
+        idle.apply(screens: Set(settings.screenOptions.filter { $0.value.idleCover }.keys),
+                   minutes: settings.idleMinutes,
+                   videoAllowed: pauseReason == nil) { [weak self] id in self?.engine.player(for: id) }
         applyBars()
     }
 
@@ -426,7 +449,7 @@ final class AppState: ObservableObject {
 
     @discardableResult
     private func addToLibrary(id: UUID, file: URL, title: String, source: String?,
-                              generated: Bool = false, updatesPhase: Bool = true) async -> Bool {
+                              generated: Bool = false, style: String? = nil, updatesPhase: Bool = true) async -> Bool {
         let asset = AVURLAsset(url: file)
         let playable = (try? await asset.load(.isPlayable)) ?? false
         guard playable else {
@@ -444,6 +467,7 @@ final class AppState: ObservableObject {
         var item = VideoItem(id: id, title: title, sourceURL: source, fileName: file.lastPathComponent,
                              addedAt: Date(), duration: duration, fileSize: size)
         if generated { item.generated = true }
+        item.style = style
         if let natural {
             item.width = Int(natural.width)
             item.height = Int(natural.height)
@@ -528,13 +552,21 @@ final class AppState: ObservableObject {
         }
     }
 
+    static let allScreensID = "__all__"
+
+    var generatorTargets: [ScreenInfo] {
+        if generatorScreenID == Self.allScreensID { return screens }
+        return generatorScreen.map { [$0] } ?? []
+    }
+
     func startGeneration() {
-        guard generatorProgress == nil, let screen = generatorScreen else { return }
-        let size = generatorSize(for: screen)
+        let targets = generatorTargets
+        guard generatorProgress == nil, !targets.isEmpty else { return }
         let options = generatorOptions
-        let id = UUID()
-        let target = Storage.videosDir.appendingPathComponent("\(id.uuidString).mp4")
-        let title = "\(L(options.style.rawValue)) · \(screen.name)"
+        let jobs: [(screen: ScreenInfo, size: (width: Int, height: Int), id: UUID, seed: UInt64)] =
+            targets.enumerated().map { index, screen in
+                (screen, generatorSize(for: screen), UUID(), options.seed &+ UInt64(index) &* 7919)
+            }
         generatorError = nil
         generatorProgress = 0
         generatorStartedAt = Date()
@@ -542,27 +574,41 @@ final class AppState: ObservableObject {
         let cancel = generatorCancel
 
         generateTask = Task { [weak self] in
-            let ok = await Task.detached(priority: .utility) {
-                Wallpaper.renderVideo(
-                    Wallpaper.renderer(width: size.width, height: size.height, options: options),
-                    seconds: options.seconds,
-                    to: target,
-                    progress: { value in Task { @MainActor in self?.generatorProgress = value } },
-                    isCancelled: { cancel.isSet }
-                )
-            }.value
+            var failed = false
+            for (index, job) in jobs.enumerated() {
+                if cancel.isSet { break }
+                var jobOptions = options
+                jobOptions.seed = job.seed
+                let target = Storage.videosDir.appendingPathComponent("\(job.id.uuidString).mp4")
+                let count = Double(jobs.count)
+                let ok = await Task.detached(priority: .utility) {
+                    Wallpaper.renderVideo(
+                        Wallpaper.renderer(width: job.size.width, height: job.size.height, options: jobOptions),
+                        seconds: jobOptions.seconds,
+                        to: target,
+                        progress: { value in Task { @MainActor in self?.generatorProgress = (Double(index) + value) / count } },
+                        isCancelled: { cancel.isSet }
+                    )
+                }.value
+                guard let self else { return }
+                let title = "\(L(options.style.rawValue)) · \(job.screen.name)"
+                if ok, await self.addToLibrary(id: job.id, file: target, title: title, source: nil,
+                                               generated: true, style: options.style.rawValue, updatesPhase: false) {
+                    self.assign(job.id, to: job.screen.id)
+                } else {
+                    try? FileManager.default.removeItem(at: target)
+                    if !cancel.isSet { failed = true }
+                    break
+                }
+            }
             guard let self else { return }
-            if ok, await self.addToLibrary(id: id, file: target, title: title, source: nil,
-                                           generated: true, updatesPhase: false) {
-                self.assign(id, to: screen.id)
-                self.generatorProgress = nil
+            self.generatorProgress = nil
+            if failed {
+                self.generatorError = L("Das Video konnte nicht erzeugt werden.")
+            } else if !cancel.isSet {
                 self.generatorOpen = false
                 self.generatorPreview = nil
                 self.generatorOptions.seed = TopoOptions.randomSeed()
-            } else {
-                try? FileManager.default.removeItem(at: target)
-                self.generatorProgress = nil
-                if !cancel.isSet { self.generatorError = L("Das Video konnte nicht erzeugt werden.") }
             }
             self.generateTask = nil
         }

@@ -189,6 +189,15 @@ T = {
     "Berge": ("Mountains", "Montagnes", "Montañas"),
     "Zart": ("Subtle", "Discrète", "Suave"),
     "Seide": ("Silk", "Soie", "Seda"),
+    "Alle Monitore": ("All displays", "Tous les écrans", "Todas las pantallas"),
+    "%d Videos · nahtlose Schleifen · ≈ %@": ("%d videos · seamless loops · ≈ %@", "%d vidéos · boucles continues · ≈ %@", "%d vídeos · bucles continuos · ≈ %@"),
+    "Alle Stile": ("All styles", "Tous les styles", "Todos los estilos"),
+    "Bei Abwesenheit abdecken": ("Cover when away", "Couvrir en cas d'absence", "Cubrir en ausencia"),
+    "Deckt den ganzen Bildschirm samt Fenstern ab, wenn du eine Weile nichts tust. Eine Mausbewegung gibt ihn sofort frei.": (
+        "Covers the whole screen, windows included, when you've been away for a while. Moving the mouse brings it right back.",
+        "Couvre tout l'écran, fenêtres comprises, quand tu t'absentes un moment. Un mouvement de souris le libère aussitôt.",
+        "Cubre toda la pantalla, ventanas incluidas, cuando no haces nada durante un rato. Al mover el ratón vuelve al instante."),
+    "Abdecken nach": ("Cover after", "Couvrir après", "Cubrir tras"),
 }
 
 root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
