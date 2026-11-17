@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.15 – November 17, 2026
+
+- The menu is tidier now: displays, library and settings each have their own tab.
+- The library is a compact list grouped by style, so it's easier to find things.
+- All settings are in one place instead of hiding in a little menu.
+
 ## 0.14 – November 17, 2026
 
 - Proledo can now cover a screen completely when you've been away for a few minutes, windows included. Move the mouse and it's gone. Turn it on per display.

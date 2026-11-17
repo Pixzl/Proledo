@@ -198,6 +198,20 @@ T = {
         "Couvre tout l'écran, fenêtres comprises, quand tu t'absentes un moment. Un mouvement de souris le libère aussitôt.",
         "Cubre toda la pantalla, ventanas incluidas, cuando no haces nada durante un rato. Al mover el ratón vuelve al instante."),
     "Abdecken nach": ("Cover after", "Couvrir après", "Cubrir tras"),
+    "Noch keine Videos": ("No videos yet", "Pas encore de vidéos", "Aún no hay vídeos"),
+    "Lade ein Video von YouTube, nimm eine eigene Datei oder lass Proledo einen Hintergrund erzeugen.": (
+        "Grab a video from YouTube, use your own file or let Proledo create a wallpaper.",
+        "Récupère une vidéo sur YouTube, utilise ton propre fichier ou laisse Proledo créer un fond d'écran.",
+        "Descarga un vídeo de YouTube, usa tu propio archivo o deja que Proledo cree un fondo."),
+    "Monitor wählen": ("Choose a display", "Choisir un écran", "Elegir pantalla"),
+    "Abwechseln": ("Rotation", "Alternance", "Alternar"),
+    "Für einen einheitlichen Look auf allen Monitoren": ("Keeps all displays looking the same", "Pour un rendu identique sur tous les écrans", "Para un aspecto uniforme en todas las pantallas"),
+    "Eigene Dateien": ("Your files", "Tes fichiers", "Tus archivos"),
+    "nicht im Wechsel": ("not in rotation", "hors alternance", "fuera de la rotación"),
+    "Wiedergabe": ("Playback", "Lecture", "Reproducción"),
+    "30 fps und höchstens 1440p": ("30 fps and up to 1440p", "30 i/s et 1440p maximum", "30 fps y hasta 1440p"),
+    "Zeit ohne Eingabe": ("Time without any input", "Temps sans aucune saisie", "Tiempo sin actividad"),
+    "Allgemein": ("General", "Général", "General"),
 }
 
 root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
