@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.12 – November 17, 2026
+
+- The northern lights look a lot more real now: fine rays of different lengths, a bright lower edge, a hint of red up high and stars shining through.
+- Fireflies flash up quickly and fade slowly like real ones, and they gather above a dark meadow.
+- Both are even easier on OLED screens than before.
+
 ## 0.11 – November 17, 2026
 
 - Two new wallpaper styles: northern lights swaying over a dark mountain ridge, and fireflies drifting around and glowing up one by one.

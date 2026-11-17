@@ -341,19 +341,24 @@ final class StarfieldGenerator: FrameRenderer, @unchecked Sendable {
     }
 
     func draw(frame: Int, total: Int, fps: Int, into ctx: CGContext) {
-        let loop = Double(total) / Double(fps)
-        let t = Double(frame) / Double(fps)
         ctx.setFillColor(CGColor(gray: 0, alpha: 1))
         ctx.fill(CGRect(x: 0, y: 0, width: width, height: height))
+        overlay(frame: frame, total: total, fps: fps, gain: 1, into: ctx)
+    }
+
+    func overlay(frame: Int, total: Int, fps: Int, gain: Double, into ctx: CGContext) {
+        let loop = Double(total) / Double(fps)
+        let t = Double(frame) / Double(fps)
+        ctx.saveGState()
         ctx.setBlendMode(.plusLighter)
         if t < fade {
             let a = t / fade
-            scene(at: t + loop, gain: 1 - a, into: ctx)
-            scene(at: t, gain: a, into: ctx)
+            scene(at: t + loop, gain: (1 - a) * gain, into: ctx)
+            scene(at: t, gain: a * gain, into: ctx)
         } else {
-            scene(at: t, gain: 1, into: ctx)
+            scene(at: t, gain: gain, into: ctx)
         }
-        ctx.setBlendMode(.normal)
+        ctx.restoreGState()
     }
 
     private func wrap(_ v: Double, _ m: Double) -> Double {

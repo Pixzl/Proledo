@@ -48,16 +48,16 @@ Proledo can draw wallpapers for you, sized for the exact display you pick. They 
   <img src="docs/starry-sky-0.9.jpg" width="820" alt="A starry sky wallpaper made by Proledo">
 </p>
 
-**Northern lights:** green curtains of light swaying over a dark mountain ridge.
+**Northern lights:** curtains of light with fine rays swaying over a dark horizon, with stars shining through.
 
 <p align="center">
-  <img src="docs/aurora-0.11.jpg" width="820" alt="A northern lights wallpaper made by Proledo">
+  <img src="docs/aurora-0.12.jpg" width="820" alt="A northern lights wallpaper made by Proledo">
 </p>
 
-**Fireflies:** warm little lights drifting around and glowing up one by one. The lightest on your screen of all four.
+**Fireflies:** little lights drifting over a meadow and flashing up one by one. The lightest on your screen of all four.
 
 <p align="center">
-  <img src="docs/fireflies-0.11.jpg" width="820" alt="A fireflies wallpaper made by Proledo">
+  <img src="docs/fireflies-0.12.jpg" width="820" alt="A fireflies wallpaper made by Proledo">
 </p>
 
 ## Install
