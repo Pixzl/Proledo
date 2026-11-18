@@ -31,6 +31,7 @@ struct ScreenOptions: Codable, Equatable {
     var hideMenuBar = false
     var hideDock = false
     var idleCover = false
+    var videoOff = false
 
     init() {}
 
@@ -39,6 +40,7 @@ struct ScreenOptions: Codable, Equatable {
         hideMenuBar = try c.decodeIfPresent(Bool.self, forKey: .hideMenuBar) ?? false
         hideDock = try c.decodeIfPresent(Bool.self, forKey: .hideDock) ?? false
         idleCover = try c.decodeIfPresent(Bool.self, forKey: .idleCover) ?? false
+        videoOff = try c.decodeIfPresent(Bool.self, forKey: .videoOff) ?? false
     }
 }
 

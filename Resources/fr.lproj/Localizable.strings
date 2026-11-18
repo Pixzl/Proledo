@@ -58,6 +58,8 @@
 "Alle aus" = "Tout désactiver";
 "Für alle" = "Tous les écrans";
 "Aus" = "Désactivé";
+"Videos abspielen" = "Lire les vidéos";
+"Aus für Monitore, die nicht einbrennen können, etwa LCDs. Aktionen für alle Monitore lassen ihn dann aus." = "Désactivez pour les écrans qui ne marquent pas, comme les LCD. Les actions pour tous les écrans l'ignorent alors.";
 "Menüleiste ausblenden" = "Masquer la barre des menus";
 "Ausgeblendete Leisten kommen zurück, sobald die Maus an den Rand fährt." = "Les barres masquées réapparaissent dès que le pointeur touche le bord.";
 "Dock ausblenden" = "Masquer le Dock";

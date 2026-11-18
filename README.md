@@ -11,10 +11,10 @@
 
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="docs/menu-dark-0.16.png">
-    <img src="docs/menu-light-0.16.png" width="400" alt="The Proledo menu with a map of five displays, their settings and rotation">
+    <source media="(prefers-color-scheme: dark)" srcset="docs/menu-dark-0.17.png">
+    <img src="docs/menu-light-0.17.png" width="400" alt="The Proledo menu with a map of five displays, their settings and rotation">
   </picture>
-  <img src="docs/generator-0.16.png" width="400" alt="Creating a northern lights wallpaper in Proledo">
+  <img src="docs/generator-0.17.png" width="400" alt="Creating a northern lights wallpaper in Proledo">
 </p>
 
 Made for the MacBook Pro with PROLED XDR display, works on any Mac and any external monitor. Proledo lives in your menu bar. Paste a YouTube link, the video gets saved locally and plays as your desktop background. Every monitor can have its own video, or none at all.
@@ -26,6 +26,7 @@ The menu has three tabs: **Displays** for what plays where, **Library** for addi
 - Downloads YouTube videos without sound, in the quality you pick
 - Grabs just a slice of long videos, like 10 minutes out of a 12-hour one
 - Lets you choose a video per monitor, portrait screens included, or rotate through them on a timer, all of one style if you like
+- Leaves displays alone that don't need it, like an LCD next to your PROLED screen
 - Hides the menu bar and Dock per monitor, they come back when your mouse hits the edge
 - Pauses on its own when the desktop is covered, the Mac is locked or running on battery
 - Has a power saving mode that plays a lighter 30 fps copy of each video

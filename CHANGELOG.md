@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.17 – November 18, 2026
+
+- You can now turn videos off for a single display, handy if only one of your screens is OLED. That display stays out of "for all" actions and generating for all displays, and your old setting comes back when you turn it on again.
+
 ## 0.16 – November 17, 2026
 
 - Silk looks smoother: the dark shades fade into each other without visible steps.

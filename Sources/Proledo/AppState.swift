@@ -166,6 +166,7 @@ final class AppState: ObservableObject {
     }
 
     func assignment(for screenID: String) -> UUID? {
+        if isVideoOff(screenID) { return nil }
         if isRotating(screenID) { return rotatingVideo(for: screenID) }
         return fixedAssignment(for: screenID)
     }
@@ -177,7 +178,15 @@ final class AppState: ObservableObject {
     }
 
     func isRotating(_ screenID: String) -> Bool {
-        settings.rotatingScreens.contains(screenID) && !library.isEmpty
+        settings.rotatingScreens.contains(screenID) && !library.isEmpty && !isVideoOff(screenID)
+    }
+
+    func isVideoOff(_ screenID: String) -> Bool {
+        settings.screenOptions[screenID]?.videoOff == true
+    }
+
+    var videoScreens: [ScreenInfo] {
+        screens.filter { !isVideoOff($0.id) }
     }
 
     private func rotatingVideo(for screenID: String) -> UUID? {
@@ -195,7 +204,7 @@ final class AppState: ObservableObject {
         let candidates = matching.isEmpty ? base : matching
         let interval = Double(max(1, settings.rotationMinutes) * 60)
         let step = Int(Date().timeIntervalSince1970 / interval)
-        let siblings = screens.filter { ($0.pixelSize.height > $0.pixelSize.width) == screenPortrait }
+        let siblings = videoScreens.filter { ($0.pixelSize.height > $0.pixelSize.width) == screenPortrait }
         let offset = siblings.firstIndex { $0.id == screenID } ?? 0
         return candidates[(step + offset) % candidates.count].id
     }
@@ -234,13 +243,13 @@ final class AppState: ObservableObject {
 
     func assignToAll(_ videoID: UUID?) {
         var s = settings
-        for screen in screens { s.assignments[screen.id] = videoID }
-        s.rotatingScreens = []
+        for screen in videoScreens { s.assignments[screen.id] = videoID }
+        s.rotatingScreens.removeAll { id in videoScreens.contains { $0.id == id } }
         settings = s
     }
 
     func rotateAll() {
-        settings.rotatingScreens = screens.map(\.id)
+        settings.rotatingScreens = videoScreens.map(\.id) + settings.rotatingScreens.filter { isVideoOff($0) }
     }
 
     private var rotationTimer: Timer?
@@ -516,8 +525,9 @@ final class AppState: ObservableObject {
             generatorOpen = true
             return
         }
-        if generatorScreenID == nil || !screens.contains(where: { $0.id == generatorScreenID }) {
-            generatorScreenID = (screens.first { assignment(for: $0.id) == nil } ?? screens.first)?.id
+        if generatorScreenID == Self.allScreensID && videoScreens.count < 2 { generatorScreenID = nil }
+        if generatorScreenID != Self.allScreensID && !screens.contains(where: { $0.id == generatorScreenID }) {
+            generatorScreenID = (videoScreens.first { assignment(for: $0.id) == nil } ?? videoScreens.first ?? screens.first)?.id
         }
         generatorError = nil
         generatorOpen = true
@@ -555,7 +565,7 @@ final class AppState: ObservableObject {
     static let allScreensID = "__all__"
 
     var generatorTargets: [ScreenInfo] {
-        if generatorScreenID == Self.allScreensID { return screens }
+        if generatorScreenID == Self.allScreensID { return videoScreens }
         return generatorScreen.map { [$0] } ?? []
     }
 

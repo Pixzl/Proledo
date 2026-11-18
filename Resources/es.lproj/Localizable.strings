@@ -58,6 +58,8 @@
 "Alle aus" = "Desactivar todas";
 "Für alle" = "Todas";
 "Aus" = "Desactivado";
+"Videos abspielen" = "Reproducir vídeos";
+"Aus für Monitore, die nicht einbrennen können, etwa LCDs. Aktionen für alle Monitore lassen ihn dann aus." = "Desactívalo en pantallas que no se queman, como las LCD. Las acciones para todas las pantallas la omitirán.";
 "Menüleiste ausblenden" = "Ocultar barra de menús";
 "Ausgeblendete Leisten kommen zurück, sobald die Maus an den Rand fährt." = "Las barras ocultas vuelven en cuanto el puntero llega al borde.";
 "Dock ausblenden" = "Ocultar el Dock";

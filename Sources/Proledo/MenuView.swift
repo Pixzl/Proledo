@@ -368,6 +368,13 @@ private struct ScreenTile: View {
                     .strokeBorder(selected ? Color.accentColor : Color.primary.opacity(0.25),
                                   lineWidth: selected ? 2 : 1)
             )
+            .overlay {
+                if state.isVideoOff(screen.id) {
+                    Image(systemName: "video.slash")
+                        .font(.system(size: 10, weight: .medium))
+                        .foregroundStyle(.white.opacity(0.45))
+                }
+            }
             .overlay(alignment: .bottomTrailing) {
                 if state.isRotating(screen.id) {
                     Image(systemName: "arrow.triangle.2.circlepath")
@@ -394,6 +401,7 @@ private struct ScreenDetail: View {
     private var selection: Binding<VideoChoice> {
         Binding(
             get: {
+                if state.isVideoOff(screen.id) { return .off }
                 if state.isRotating(screen.id) { return .rotate }
                 if let id = state.fixedAssignment(for: screen.id) { return .video(id) }
                 return .off
@@ -423,8 +431,12 @@ private struct ScreenDetail: View {
                 }
                 .labelsHidden()
                 .frame(maxWidth: 170)
-                .disabled(state.library.isEmpty)
+                .disabled(state.library.isEmpty || state.isVideoOff(screen.id))
             }
+            RowDivider()
+            SwitchRow(title: L("Videos abspielen"),
+                      help: L("Aus für Monitore, die nicht einbrennen können, etwa LCDs. Aktionen für alle Monitore lassen ihn dann aus."),
+                      isOn: videoBinding)
             RowDivider()
             SwitchRow(title: L("Menüleiste ausblenden"),
                       help: L("Ausgeblendete Leisten kommen zurück, sobald die Maus an den Rand fährt."),
@@ -445,6 +457,17 @@ private struct ScreenDetail: View {
         var parts = ["\(w) × \(h)"]
         if h > w { parts.append(L("hochkant")) }
         return parts.joined(separator: " · ")
+    }
+
+    private var videoBinding: Binding<Bool> {
+        Binding(
+            get: { !state.options(for: screen.id).videoOff },
+            set: { value in
+                var options = state.options(for: screen.id)
+                options.videoOff = !value
+                state.setOptions(options, for: screen.id)
+            }
+        )
     }
 
     private func optionBinding(_ keyPath: WritableKeyPath<ScreenOptions, Bool>) -> Binding<Bool> {
@@ -1055,7 +1078,7 @@ private struct GeneratorCard: View {
             }
             row(L("Monitor")) {
                 Picker("", selection: $state.generatorScreenID) {
-                    if state.screens.count > 1 {
+                    if state.videoScreens.count > 1 {
                         Text(L("Alle Monitore")).tag(Optional(AppState.allScreensID))
                         Divider()
                     }
