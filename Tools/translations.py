@@ -193,11 +193,11 @@ T = {
     "%d Videos · nahtlose Schleifen · ≈ %@": ("%d videos · seamless loops · ≈ %@", "%d vidéos · boucles continues · ≈ %@", "%d vídeos · bucles continuos · ≈ %@"),
     "Alle Stile": ("All styles", "Tous les styles", "Todos los estilos"),
     "Bei Abwesenheit abdecken": ("Cover when away", "Couvrir en cas d'absence", "Cubrir en ausencia"),
-    "Videos abspielen": ("Play videos", "Lire les vidéos", "Reproducir vídeos"),
-    "Aus für Monitore, die nicht einbrennen können, etwa LCDs. Aktionen für alle Monitore lassen ihn dann aus.": (
-        "Turn off for displays that can't burn in, like LCDs. Actions for all displays will skip it.",
-        "Désactivez pour les écrans qui ne marquent pas, comme les LCD. Les actions pour tous les écrans l'ignorent alors.",
-        "Desactívalo en pantallas que no se queman, como las LCD. Las acciones para todas las pantallas la omitirán.",
+    "Bewegung": ("Motion", "Mouvement", "Movimiento"),
+    "Aus: Das Video hält an und das Bild bleibt stehen. Gut für LCDs, die nicht einbrennen können.": (
+        "Off: the video stops and the picture stays. Good for LCDs, which can't burn in.",
+        "Désactivé : la vidéo s'arrête et l'image reste. Idéal pour les LCD, qui ne marquent pas.",
+        "Desactivado: el vídeo se detiene y la imagen se queda. Ideal para pantallas LCD, que no se queman.",
     ),
     "Deckt den ganzen Bildschirm samt Fenstern ab, wenn du eine Weile nichts tust. Eine Mausbewegung gibt ihn sofort frei.": (
         "Covers the whole screen, windows included, when you've been away for a while. Moving the mouse brings it right back.",

@@ -58,8 +58,8 @@
 "Alle aus" = "All off";
 "Für alle" = "All displays";
 "Aus" = "Off";
-"Videos abspielen" = "Play videos";
-"Aus für Monitore, die nicht einbrennen können, etwa LCDs. Aktionen für alle Monitore lassen ihn dann aus." = "Turn off for displays that can't burn in, like LCDs. Actions for all displays will skip it.";
+"Bewegung" = "Motion";
+"Aus: Das Video hält an und das Bild bleibt stehen. Gut für LCDs, die nicht einbrennen können." = "Off: the video stops and the picture stays. Good for LCDs, which can't burn in.";
 "Menüleiste ausblenden" = "Hide menu bar";
 "Ausgeblendete Leisten kommen zurück, sobald die Maus an den Rand fährt." = "Hidden bars come back as soon as your pointer hits the edge.";
 "Dock ausblenden" = "Hide Dock";

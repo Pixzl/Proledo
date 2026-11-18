@@ -368,20 +368,18 @@ private struct ScreenTile: View {
                     .strokeBorder(selected ? Color.accentColor : Color.primary.opacity(0.25),
                                   lineWidth: selected ? 2 : 1)
             )
-            .overlay {
-                if state.isVideoOff(screen.id) {
-                    Image(systemName: "video.slash")
-                        .font(.system(size: 10, weight: .medium))
-                        .foregroundStyle(.white.opacity(0.45))
-                }
-            }
             .overlay(alignment: .bottomTrailing) {
-                if state.isRotating(screen.id) {
-                    Image(systemName: "arrow.triangle.2.circlepath")
-                        .font(.system(size: 8, weight: .semibold))
-                        .foregroundStyle(.white.opacity(0.85))
-                        .padding(4)
+                HStack(spacing: 3) {
+                    if state.isPaused(screen.id) && state.assignment(for: screen.id) != nil {
+                        Image(systemName: "pause.fill")
+                    }
+                    if state.isRotating(screen.id) {
+                        Image(systemName: "arrow.triangle.2.circlepath")
+                    }
                 }
+                .font(.system(size: 8, weight: .semibold))
+                .foregroundStyle(.white.opacity(0.85))
+                .padding(4)
             }
             .contentShape(Rectangle())
             .help(screen.name)
@@ -401,7 +399,6 @@ private struct ScreenDetail: View {
     private var selection: Binding<VideoChoice> {
         Binding(
             get: {
-                if state.isVideoOff(screen.id) { return .off }
                 if state.isRotating(screen.id) { return .rotate }
                 if let id = state.fixedAssignment(for: screen.id) { return .video(id) }
                 return .off
@@ -431,11 +428,11 @@ private struct ScreenDetail: View {
                 }
                 .labelsHidden()
                 .frame(maxWidth: 170)
-                .disabled(state.library.isEmpty || state.isVideoOff(screen.id))
+                .disabled(state.library.isEmpty)
             }
             RowDivider()
-            SwitchRow(title: L("Videos abspielen"),
-                      help: L("Aus für Monitore, die nicht einbrennen können, etwa LCDs. Aktionen für alle Monitore lassen ihn dann aus."),
+            SwitchRow(title: L("Bewegung"),
+                      help: L("Aus: Das Video hält an und das Bild bleibt stehen. Gut für LCDs, die nicht einbrennen können."),
                       isOn: videoBinding)
             RowDivider()
             SwitchRow(title: L("Menüleiste ausblenden"),
@@ -461,10 +458,10 @@ private struct ScreenDetail: View {
 
     private var videoBinding: Binding<Bool> {
         Binding(
-            get: { !state.options(for: screen.id).videoOff },
+            get: { !state.options(for: screen.id).paused },
             set: { value in
                 var options = state.options(for: screen.id)
-                options.videoOff = !value
+                options.paused = !value
                 state.setOptions(options, for: screen.id)
             }
         )
@@ -1078,7 +1075,7 @@ private struct GeneratorCard: View {
             }
             row(L("Monitor")) {
                 Picker("", selection: $state.generatorScreenID) {
-                    if state.videoScreens.count > 1 {
+                    if state.screens.count > 1 {
                         Text(L("Alle Monitore")).tag(Optional(AppState.allScreensID))
                         Divider()
                     }

@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.17.1 – November 18, 2026
+
+- Turning off motion for a display now keeps the picture on screen and just stops the video, instead of going black. "For all" and generating for all displays include that display again, so everything still looks the same.
+
 ## 0.17 – November 18, 2026
 
 - You can now turn videos off for a single display, handy if only one of your screens is OLED. That display stays out of "for all" actions and generating for all displays, and your old setting comes back when you turn it on again.
