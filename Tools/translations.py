@@ -189,6 +189,7 @@ T = {
     "Berge": ("Mountains", "Montagnes", "Montañas"),
     "Zart": ("Subtle", "Discrète", "Suave"),
     "Seide": ("Silk", "Soie", "Seda"),
+    "Sternennebel": ("Nebula", "Nébuleuse", "Nebulosa"),
     "Alle Monitore": ("All displays", "Tous les écrans", "Todas las pantallas"),
     "%d Videos · nahtlose Schleifen · ≈ %@": ("%d videos · seamless loops · ≈ %@", "%d vidéos · boucles continues · ≈ %@", "%d vídeos · bucles continuos · ≈ %@"),
     "Alle Stile": ("All styles", "Tous les styles", "Todos los estilos"),

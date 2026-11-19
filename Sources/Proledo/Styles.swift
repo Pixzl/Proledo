@@ -623,3 +623,131 @@ final class SilkGenerator: FrameRenderer, @unchecked Sendable {
         paths.removeAll()
     }
 }
+
+final class NebulaGenerator: FrameRenderer, @unchecked Sendable {
+    let width: Int
+    let height: Int
+    let bitRateFactor = 1.3
+    let deepColor = true
+
+    private let stars: StarfieldGenerator
+    private let shape: PerlinNoise
+    private let warp: PerlinNoise
+    private let tint: PerlinNoise
+    private let grain: PerlinNoise
+    private let step: Int
+    private let cols: Int
+    private let rows: Int
+    private let unit: Double
+    private let low: Double
+    private let high: Double
+    private let brightness: Double
+    private let radius: Double
+    private let cycles: Double
+    private let phase: Double
+
+    init(width: Int, height: Int, options: TopoOptions) {
+        self.width = width
+        self.height = height
+        var starOptions = options
+        starOptions.milkyWay = false
+        stars = StarfieldGenerator(width: width, height: height, options: starOptions)
+        shape = PerlinNoise(seed: options.seed ^ 0x4E42_554C)
+        warp = PerlinNoise(seed: options.seed ^ 0x5741_5250)
+        tint = PerlinNoise(seed: options.seed ^ 0x5449_4E54)
+        grain = PerlinNoise(seed: options.seed ^ 0x4752_4149)
+        step = max(2, min(width, height) / 360)
+        cols = width / step + 2
+        rows = height / step + 2
+        unit = Double(min(width, height))
+        switch options.density {
+        case .loose: (low, high, brightness) = (0.08, 0.42, 0.26)
+        case .normal: (low, high, brightness) = (0.0, 0.36, 0.32)
+        case .dense: (low, high, brightness) = (-0.06, 0.3, 0.27)
+        }
+        let pace: Double
+        switch options.speed {
+        case .calm: pace = 0.006
+        case .normal: pace = 0.0105
+        case .lively: pace = 0.016
+        }
+        radius = pace * Double(options.seconds)
+        cycles = 1
+        var random = SeededRandom(seed: options.seed ^ 0x9E37)
+        phase = random.unit() * 2 * .pi
+    }
+
+    private func fbm(_ noise: PerlinNoise, _ x: Double, _ y: Double, octaves: Int) -> Double {
+        var sum = 0.0, amplitude = 1.0, frequency = 1.0, norm = 0.0
+        for octave in 0..<octaves {
+            sum += amplitude * noise.noise(x * frequency + Double(octave) * 17.3, y * frequency - Double(octave) * 9.1)
+            norm += amplitude
+            amplitude *= 0.5
+            frequency *= 2.03
+        }
+        return sum / norm
+    }
+
+    private func smooth(_ a: Double, _ b: Double, _ x: Double) -> Double {
+        let t = min(1, max(0, (x - a) / (b - a)))
+        return t * t * (3 - 2 * t)
+    }
+
+    private func color(hue: Double, saturation: Double, value: Double) -> (Double, Double, Double) {
+        let h = (hue - floor(hue)) * 6
+        let i = Int(h) % 6, f = h - floor(h)
+        let p = value * (1 - saturation), q = value * (1 - saturation * f), t = value * (1 - saturation * (1 - f))
+        switch i {
+        case 0: return (value, t, p)
+        case 1: return (q, value, p)
+        case 2: return (p, value, t)
+        case 3: return (p, q, value)
+        case 4: return (t, p, value)
+        default: return (value, p, q)
+        }
+    }
+
+    private func nebula(at progress: Double) -> CGImage? {
+        guard let ctx = Wallpaper.makeDeepContext(width: cols, height: rows) else { return nil }
+        let buffer = ctx.data!.assumingMemoryBound(to: UInt16.self)
+        let stride = ctx.bytesPerRow / 2
+        let angle = 2 * .pi * cycles * progress
+        let ox = cos(angle + phase) * radius, oy = sin(angle + phase) * radius
+        let wx = cos(-angle + phase * 1.7) * radius * 0.6, wy = sin(-angle + phase * 1.7) * radius * 0.6
+        let cell = Double(step)
+        DispatchQueue.concurrentPerform(iterations: rows) { j in
+            for i in 0..<cols {
+                let u = Double(i) * cell / unit, v = Double(j) * cell / unit
+                let bend = fbm(warp, u * 0.9 + wx, v * 0.9 + wy, octaves: 3)
+                let n = fbm(shape, u * 1.3 + bend * 1.6 + ox, v * 1.3 + oy, octaves: 5)
+                let mask = smooth(low, high, n)
+                var value = 0.0, rgb = (0.0, 0.0, 0.0)
+                if mask > 0 {
+                    let detail = 0.75 + 0.25 * (0.5 + fbm(grain, u * 6 + ox, v * 6 + oy, octaves: 3))
+                    value = mask * brightness * detail
+                    let swirl = fbm(tint, u * 0.6 + ox * 0.5, v * 0.6 + oy * 0.5, octaves: 2)
+                    let hue = 0.7 + 0.2 * sin(2 * .pi * (swirl * 1.6 + u * 0.15 + progress * cycles))
+                    rgb = color(hue: hue, saturation: 0.75, value: value)
+                }
+                let o = j * stride + i * 4
+                buffer[o] = UInt16(min(65535, rgb.0 * 65535))
+                buffer[o + 1] = UInt16(min(65535, rgb.1 * 65535))
+                buffer[o + 2] = UInt16(min(65535, rgb.2 * 65535))
+                buffer[o + 3] = 65535
+            }
+        }
+        return ctx.makeImage()
+    }
+
+    func draw(frame: Int, total: Int, fps: Int, into ctx: CGContext) {
+        ctx.setFillColor(CGColor(gray: 0, alpha: 1))
+        ctx.fill(CGRect(x: 0, y: 0, width: width, height: height))
+        if let image = nebula(at: Double(frame) / Double(max(total, 1))) {
+            ctx.saveGState()
+            ctx.interpolationQuality = .high
+            ctx.draw(image, in: CGRect(x: 0, y: Double(height - (rows - 0) * step), width: Double(cols * step), height: Double(rows * step)))
+            ctx.restoreGState()
+        }
+        stars.overlay(frame: frame, total: total, fps: fps, gain: 1, into: ctx)
+    }
+}

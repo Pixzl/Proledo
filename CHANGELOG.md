@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.18 – November 19, 2026
+
+- New wallpaper style: Nebula. Colorful clouds of teal, blue, violet and pink slowly drift and swirl behind the stars. The colors keep moving across the whole screen, so it stays as gentle on PROLED and OLED displays as silk.
+
 ## 0.17.1 – November 18, 2026
 
 - Turning off motion for a display now keeps the picture on screen and just stops the video, instead of going black. "For all" and generating for all displays include that display again, so everything still looks the same.

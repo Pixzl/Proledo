@@ -11,10 +11,10 @@
 
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="docs/menu-dark-0.17.1.png">
-    <img src="docs/menu-light-0.17.1.png" width="400" alt="The Proledo menu with a map of five displays, their settings and rotation">
+    <source media="(prefers-color-scheme: dark)" srcset="docs/menu-dark-0.18.png">
+    <img src="docs/menu-light-0.18.png" width="400" alt="The Proledo menu with a map of five displays, their settings and rotation">
   </picture>
-  <img src="docs/generator-0.17.1.png" width="400" alt="Creating a northern lights wallpaper in Proledo">
+  <img src="docs/generator-0.18.png" width="400" alt="Creating a nebula wallpaper in Proledo">
 </p>
 
 Made for the MacBook Pro with PROLED XDR display, works on any Mac and any external monitor. Proledo lives in your menu bar. Paste a YouTube link, the video gets saved locally and plays as your desktop background. Every monitor can have its own video, or none at all.
@@ -33,7 +33,7 @@ The menu has three tabs: **Displays** for what plays where, **Library** for addi
 - Never keeps your screen awake
 - Covers the whole screen, windows and all, when you step away, and clears it the moment you're back
 - Works with your own video files too and keeps your library sorted by style
-- Creates its own wallpapers as seamless loops sized for each display: contour lines, starry sky, northern lights, fireflies or silk, for one display or all of them at once
+- Creates its own wallpapers as seamless loops sized for each display: contour lines, starry sky, northern lights, fireflies, silk or nebula, for one display or all of them at once
 - Available in English, German, French and Spanish
 
 ## Make your own
@@ -68,6 +68,12 @@ Proledo can draw wallpapers for you, sized for the exact display you pick. They 
 
 <p align="center">
   <img src="docs/silk-0.16.jpg" width="820" alt="A silk wallpaper made by Proledo">
+</p>
+
+**Nebula:** colorful clouds slowly swirling behind the stars. The colors drift across the whole screen, so no spot gets more than its share.
+
+<p align="center">
+  <img src="docs/nebula-0.18.jpg" width="820" alt="A nebula wallpaper made by Proledo">
 </p>
 
 ## Install

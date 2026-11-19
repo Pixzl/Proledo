@@ -1122,7 +1122,7 @@ private struct GeneratorCard: View {
                         .toggleStyle(.switch)
                         .controlSize(.mini)
                 }
-            case .fireflies:
+            case .fireflies, .nebula:
                 EmptyView()
             }
             row(L("Länge")) {
@@ -1173,7 +1173,7 @@ private struct GeneratorCard: View {
     private func estimatedBytes(_ size: (width: Int, height: Int)) -> Int64 {
         let factor: Double
         switch state.generatorOptions.style {
-        case .stars: factor = 1.3
+        case .stars, .nebula: factor = 1.3
         case .silk: factor = 1.2
         case .aurora: factor = 1.15
         case .contours, .fireflies: factor = 1.0
@@ -1185,8 +1185,8 @@ private struct GeneratorCard: View {
     private func densityLabel(_ density: TopoOptions.Density) -> String {
         switch (state.generatorOptions.style, density) {
         case (.contours, _), (.silk, _): return L(density.rawValue)
-        case (.aurora, .loose): return L("Zart")
-        case (.aurora, .dense): return L("Kräftig")
+        case (.aurora, .loose), (.nebula, .loose): return L("Zart")
+        case (.aurora, .dense), (.nebula, .dense): return L("Kräftig")
         case (_, .loose): return L("Wenige")
         case (_, .dense): return L("Viele")
         case (_, .normal): return L("Normal")
