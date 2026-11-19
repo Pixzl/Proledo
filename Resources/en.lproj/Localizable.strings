@@ -19,7 +19,6 @@
 "Bildschirm aus" = "Display off";
 "Gesperrt" = "Locked";
 "Pausiert im Akkubetrieb" = "Paused on battery";
-"Pausiert im Energiesparmodus" = "Paused in Low Power Mode";
 "Das ist kein gültiger Link." = "That's not a valid link.";
 "Zeiten bitte als m:ss oder h:mm:ss eingeben." = "Enter times as m:ss or h:mm:ss.";
 "Der Anfang liegt hinter dem Videoende (%@)." = "The start is past the end of the video (%@).";

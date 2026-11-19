@@ -19,7 +19,6 @@
 "Bildschirm aus" = "Écran éteint";
 "Gesperrt" = "Verrouillé";
 "Pausiert im Akkubetrieb" = "En pause sur batterie";
-"Pausiert im Energiesparmodus" = "En pause en mode Économie d'énergie";
 "Das ist kein gültiger Link." = "Ce lien n'est pas valide.";
 "Zeiten bitte als m:ss oder h:mm:ss eingeben." = "Saisis les durées au format m:ss ou h:mm:ss.";
 "Der Anfang liegt hinter dem Videoende (%@)." = "Le début se situe après la fin de la vidéo (%@).";

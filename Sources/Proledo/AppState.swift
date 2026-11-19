@@ -287,7 +287,6 @@ final class AppState: ObservableObject {
         if power.screensAsleep { return L("Bildschirm aus") }
         if power.locked { return L("Gesperrt") }
         if settings.pauseOnBattery && power.onBattery { return L("Pausiert im Akkubetrieb") }
-        if power.lowPower { return L("Pausiert im Energiesparmodus") }
         return nil
     }
 
@@ -296,7 +295,7 @@ final class AppState: ObservableObject {
         let screenIDs = Set(settings.assignments.keys).union(settings.rotatingScreens)
         for screenID in screenIDs {
             if let videoID = assignment(for: screenID), let item = library.first(where: { $0.id == videoID }) {
-                let eco = settings.powerSaving ? item.ecoURL : nil
+                let eco = settings.powerSaving || power.lowPower ? item.ecoURL : nil
                 desired[screenID] = eco ?? item.fileURL
             }
         }

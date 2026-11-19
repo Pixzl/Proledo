@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.18.1 – November 19, 2026
+
+- Proledo no longer stops when your Mac is in Low Power Mode. It keeps playing and uses the lighter copy of a video if there is one. If you want it to stop on battery, there's still a switch for that in Settings.
+
 ## 0.18 – November 19, 2026
 
 - New wallpaper style: Nebula. Colorful clouds of teal, blue, violet and pink slowly drift and swirl behind the stars. The colors keep moving across the whole screen, so it stays as gentle on PROLED and OLED displays as silk.
