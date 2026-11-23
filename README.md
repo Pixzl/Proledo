@@ -11,10 +11,10 @@
 
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="docs/menu-dark-0.19.png">
-    <img src="docs/menu-light-0.19.png" width="400" alt="The Proledo menu with a map of five displays, their settings and rotation">
+    <source media="(prefers-color-scheme: dark)" srcset="docs/menu-dark-0.19.1.png">
+    <img src="docs/menu-light-0.19.1.png" width="400" alt="The Proledo menu with a map of five displays, their settings and rotation">
   </picture>
-  <img src="docs/generator-0.19.png" width="400" alt="Creating a fluted glass wallpaper in Proledo">
+  <img src="docs/generator-0.19.1.png" width="400" alt="Creating a fluted glass wallpaper in Proledo">
 </p>
 
 Made for the MacBook Pro with PROLED XDR display, works on any Mac and any external monitor. Proledo lives in your menu bar. Paste a YouTube link, the video gets saved locally and plays as your desktop background. Every monitor can have its own video, or none at all.
@@ -28,7 +28,8 @@ The menu has three tabs: **Displays** for what plays where, **Library** for addi
 - Lets you choose a video per monitor, portrait screens included, or rotate through them on a timer, all of one style if you like
 - Can keep a display still, like an LCD next to your PROLED screen: the picture stays, only the motion stops
 - Hides the menu bar and Dock per monitor, they come back when your mouse hits the edge
-- Pauses on its own when the desktop is covered, the Mac is locked or running on battery
+- Pauses on its own when the desktop is covered or the Mac is locked, and on battery if you want it to
+- Keeps playing in Low Power Mode, using the lighter copy of a video when there is one
 - Has a power saving mode that plays a lighter 30 fps copy of each video
 - Never keeps your screen awake
 - Covers the whole screen, windows and all, when you step away, and clears it the moment you're back
@@ -39,6 +40,8 @@ The menu has three tabs: **Displays** for what plays where, **Library** for addi
 ## Make your own
 
 Proledo can draw wallpapers for you, sized for the exact display you pick. They loop without a visible jump and have no watermark, so nothing on screen stays still. Pick "All displays" and every monitor gets its own video in its exact size, and rotation can stick to one style so everything matches.
+
+Every style is checked for how bright it gets on average and how evenly the light spreads over the screen, so no spot wears out faster than the rest. Silk, nebula and fluted glass are rendered in 10-bit, which keeps dark gradients smooth.
 
 **Contour lines:** white lines slowly flowing over black.
 
@@ -76,10 +79,10 @@ Proledo can draw wallpapers for you, sized for the exact display you pick. They 
   <img src="docs/nebula-0.18.jpg" width="820" alt="A nebula wallpaper made by Proledo">
 </p>
 
-**Fluted glass:** soft light gliding behind ribbed glass, in bronze, steel blue or olive. Subtle and Normal are made for PROLED and OLED displays. Bold is much brighter and better suited to LCDs.
+**Fluted glass:** soft light with bright spots gliding behind ribbed glass, in bronze, steel blue or olive. Subtle and Normal are made for PROLED and OLED displays. Bold is much brighter and better suited to LCDs.
 
 <p align="center">
-  <img src="docs/fluted-glass-0.19.jpg" width="820" alt="A fluted glass wallpaper made by Proledo">
+  <img src="docs/fluted-glass-0.19.1.jpg" width="820" alt="A fluted glass wallpaper made by Proledo">
 </p>
 
 ## Install
