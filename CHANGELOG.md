@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.19.1 – November 23, 2026
+
+- Fluted glass now comes out equally bright every time. Before, some videos ended up more than twice as bright as they should, and spots the light kept passing got the most. That's evened out now, which is easier on PROLED and OLED displays.
+
 ## 0.19 – November 23, 2026
 
 - New wallpaper style: Fluted glass. Soft light with bright spots glides behind ribbed glass, in bronze, steel blue or olive. Subtle and Normal are gentle on PROLED and OLED displays. Bold is a lot brighter and better for LCDs, the generator tells you so.

@@ -777,6 +777,10 @@ final class GlassGenerator: FrameRenderer, @unchecked Sendable {
     private let top: (Double, Double, Double)
     private let tone: [Double]
     private let toneScale: Double
+    private var level = 1.0
+    private var gains = [Double](repeating: 1, count: 48 * 27)
+    private let gainColumns = 48
+    private let gainRows = 27
     private let step: Int
     private let cols: Int
     private let rows: Int
@@ -828,6 +832,74 @@ final class GlassGenerator: FrameRenderer, @unchecked Sendable {
         step = max(2, min(width, height) / 270)
         cols = width / step + 3
         rows = height / step + 3
+        let target: Double
+        switch options.density {
+        case .loose: target = 0.0206
+        case .normal: target = 0.042
+        case .dense: target = 0.197
+        }
+        level = balancedLevel(target: target)
+    }
+
+    private func lightness(_ v: Double, _ level: Double) -> Double {
+        let tv = tone[min(1023, max(0, Int(v * level * toneScale)))]
+        return pow(min(1, tv * 1.4), 2.2)
+    }
+
+    private func solveLevel(_ samples: [Double], weights: [Double], cells: Int, target: Double) -> Double {
+        var low = 0.2, high = 4.0
+        for _ in 0..<30 {
+            let mid = (low + high) / 2
+            var sum = 0.0
+            for (index, v) in samples.enumerated() { sum += lightness(v, mid) * weights[index % cells] }
+            if sum / Double(max(samples.count, 1)) < target { low = mid } else { high = mid }
+        }
+        return (low + high) / 2
+    }
+
+    private func balancedLevel(target: Double) -> Double {
+        let gx = gainColumns, gy = gainRows, frames = 40, cells = gx * gy
+        var samples = [Double](repeating: 0, count: cells * frames)
+        samples.withUnsafeMutableBufferPointer { buffer in
+            DispatchQueue.concurrentPerform(iterations: frames) { f in
+                let t = Double(f) / Double(frames)
+                for j in 0..<gy {
+                    for i in 0..<gx {
+                        buffer[f * cells + j * gx + i] = field((Double(i) + 0.5) * Double(width) / Double(gx),
+                                                               (Double(j) + 0.5) * Double(height) / Double(gy), t)
+                    }
+                }
+            }
+        }
+        let flat = [Double](repeating: 1, count: cells)
+        let first = solveLevel(samples, weights: flat, cells: cells, target: target)
+        var average = [Double](repeating: 0, count: cells)
+        for (index, v) in samples.enumerated() { average[index % cells] += lightness(v, first) / Double(frames) }
+        for _ in 0..<2 {
+            var blurred = average
+            for j in 0..<gy {
+                for i in 0..<gx {
+                    var sum = 0.0, count = 0.0
+                    for dj in -1...1 {
+                        for di in -1...1 {
+                            let x = i + di, y = j + dj
+                            guard x >= 0, x < gx, y >= 0, y < gy else { continue }
+                            sum += average[y * gx + x]
+                            count += 1
+                        }
+                    }
+                    blurred[j * gx + i] = sum / count
+                }
+            }
+            average = blurred
+        }
+        let peak = average.max() ?? 0
+        let lit = average.filter { $0 > peak * 0.05 }.sorted()
+        guard !lit.isEmpty else { return first }
+        let cap = lit[Int(Double(lit.count - 1) * 0.7)]
+        gains = average.map { $0 > cap ? pow(cap / $0, 0.45) : 1 }
+        let weights = gains.map { pow($0, 2.2) }
+        return solveLevel(samples, weights: weights, cells: cells, target: target)
     }
 
     private static let lanes = [(1.0, 1.0), (1.0, 2.0), (2.0, 1.0), (1.0, 1.0), (1.0, 2.0)]
@@ -896,7 +968,9 @@ final class GlassGenerator: FrameRenderer, @unchecked Sendable {
         let out = image.data!.assumingMemoryBound(to: UInt16.self)
         let stride = image.bytesPerRow / 2
         let w = width, colsCount = cols, rowsCount = rows
-        let toneTable = tone, scale = toneScale, mid = mid, top = top
+        let toneTable = tone, scale = toneScale * level, mid = mid, top = top
+        let gainMap = gains, gx = gainColumns, gy = gainRows
+        let fw = Double(width), fh = Double(height)
         low.withUnsafeBufferPointer { field in
             func shadeAt(_ o: (Double, Double, Double, Double), _ y: Int) -> (Double, Double, Double) {
                 let fx = min(Double(colsCount - 2), max(0, o.0 / cell + 1))
@@ -920,6 +994,14 @@ final class GlassGenerator: FrameRenderer, @unchecked Sendable {
                         let d = shadeAt(second[x], y)
                         c = (c.0 * k + d.0 * (1 - k), c.1 * k + d.1 * (1 - k), c.2 * k + d.2 * (1 - k))
                     }
+                    let gxf = min(Double(gx - 1), max(0, (Double(x) + 0.5) / fw * Double(gx) - 0.5))
+                    let gyf = min(Double(gy - 1), max(0, (Double(y) + 0.5) / fh * Double(gy) - 0.5))
+                    let gi = min(gx - 2, Int(gxf)), gj = min(gy - 2, Int(gyf))
+                    let ga = gxf - Double(gi), gb = gyf - Double(gj)
+                    let g00 = gainMap[gj * gx + gi], g10 = gainMap[gj * gx + gi + 1]
+                    let g01 = gainMap[(gj + 1) * gx + gi], g11 = gainMap[(gj + 1) * gx + gi + 1]
+                    let g = (g00 + (g10 - g00) * ga) * (1 - gb) + (g01 + (g11 - g01) * ga) * gb
+                    c = (c.0 * g, c.1 * g, c.2 * g)
                     let o = y * stride + x * 4
                     out[o] = UInt16(min(65535, c.0 * 65535))
                     out[o + 1] = UInt16(min(65535, c.1 * 65535))
