@@ -4,7 +4,7 @@ import Foundation
 
 struct TopoOptions: Equatable {
     enum Style: String, CaseIterable, Identifiable {
-        case contours = "Höhenlinien", stars = "Sternenhimmel", aurora = "Polarlicht", fireflies = "Glühwürmchen", silk = "Seide", nebula = "Sternennebel"
+        case contours = "Höhenlinien", stars = "Sternenhimmel", aurora = "Polarlicht", fireflies = "Glühwürmchen", silk = "Seide", nebula = "Sternennebel", glass = "Riffelglas"
         var id: Self { self }
     }
 
@@ -15,6 +15,11 @@ struct TopoOptions: Equatable {
 
     enum Speed: String, CaseIterable, Identifiable {
         case calm = "Ruhig", normal = "Normal", lively = "Lebhaft"
+        var id: Self { self }
+    }
+
+    enum Tint: String, CaseIterable, Identifiable {
+        case bronze = "Bronze", steel = "Stahlblau", olive = "Oliv"
         var id: Self { self }
     }
 
@@ -29,6 +34,7 @@ struct TopoOptions: Equatable {
     var density = Density.normal
     var speed = Speed.normal
     var lines = Lines.fine
+    var tint = Tint.bronze
     var seconds = 120
     var seed = TopoOptions.randomSeed()
 

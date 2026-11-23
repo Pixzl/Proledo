@@ -751,3 +751,185 @@ final class NebulaGenerator: FrameRenderer, @unchecked Sendable {
         stars.overlay(frame: frame, total: total, fps: fps, gain: 1, into: ctx)
     }
 }
+
+final class GlassGenerator: FrameRenderer, @unchecked Sendable {
+    let width: Int
+    let height: Int
+    let bitRateFactor = 1.2
+    let deepColor = true
+
+    private struct Blob {
+        let phase: Double
+        let spin: Double
+        let sizeX: Double
+        let sizeY: Double
+        let weight: Double
+        let lane: Double
+        let swing: Double
+    }
+
+    private let blobs: [Blob]
+    private let unit: Double
+    private let ribWidth: Double
+    private let cycles: Double
+    private let drift: Double
+    private let mid: (Double, Double, Double)
+    private let top: (Double, Double, Double)
+    private let tone: [Double]
+    private let toneScale: Double
+    private let step: Int
+    private let cols: Int
+    private let rows: Int
+
+    init(width: Int, height: Int, options: TopoOptions) {
+        self.width = width
+        self.height = height
+        unit = Double(min(width, height))
+        ribWidth = unit / 30
+        let spread: Double
+        switch options.density {
+        case .loose: spread = 0.6
+        case .normal: spread = 0.62
+        case .dense: spread = 1
+        }
+        var random = SeededRandom(seed: options.seed ^ 0x474C_4153)
+        blobs = (0..<5).map { k in
+            Blob(phase: random.unit() * 2 * .pi, spin: random.unit() * 2 * .pi,
+                 sizeX: (0.3 + random.unit() * 0.16) * spread, sizeY: (0.09 + random.unit() * 0.07) * spread,
+                 weight: k == 0 ? 1.1 : 0.75, lane: random.unit(), swing: 0.35 + random.unit() * 0.25)
+        }
+        let pace: Double
+        switch options.speed {
+        case .calm: pace = 0.7
+        case .normal: pace = 1
+        case .lively: pace = 1.8
+        }
+        cycles = max(1, (Double(options.seconds) / 120 * pace).rounded())
+        drift = cycles * 45
+
+        switch options.tint {
+        case .bronze: (mid, top) = ((0.55, 0.36, 0.2), (1.0, 0.9, 0.78))
+        case .steel: (mid, top) = ((0.2, 0.42, 0.58), (0.82, 0.93, 1.0))
+        case .olive: (mid, top) = ((0.38, 0.5, 0.14), (0.9, 0.95, 0.82))
+        }
+
+        let curve: (low: Double, high: Double, power: Double)
+        switch options.density {
+        case .loose: curve = (0.15, 1.3, 2.4)
+        case .normal: curve = (0.12, 1.1, 2.4)
+        case .dense: curve = (0.12, 1.1, 1.8)
+        }
+        toneScale = 1023 / 2.5
+        tone = (0..<1024).map { i in
+            let v = Double(i) / 1023 * 2.5
+            let t = min(1, max(0, (v - curve.low) / (curve.high - curve.low)))
+            return pow(t * t * (3 - 2 * t), curve.power)
+        }
+        step = max(2, min(width, height) / 270)
+        cols = width / step + 3
+        rows = height / step + 3
+    }
+
+    private static let lanes = [(1.0, 1.0), (1.0, 2.0), (2.0, 1.0), (1.0, 1.0), (1.0, 2.0)]
+
+    private func field(_ x: Double, _ y: Double, _ t: Double) -> Double {
+        let tau = 2 * Double.pi
+        let w = Double(width), h = Double(height)
+        var f = 0.0
+        for (k, blob) in blobs.enumerated() {
+            let turn = tau * cycles * t
+            let direction: Double = k % 2 == 0 ? 1 : -1
+            let lane = Self.lanes[k % Self.lanes.count]
+            let cx = w * (0.5 + 0.5 * sin(direction * lane.0 * turn + blob.phase))
+            let cy = h * (0.5 + 0.45 * sin(lane.1 * turn + blob.phase * 1.3))
+            let wx = x + unit * 0.21 * sin(y / unit * 5.3 + blob.phase + turn)
+            let wy = y + unit * 0.1 * sin(x / unit * 2.3 - blob.phase + turn)
+            let dx = (wx - cx) / unit, dy = (wy - cy) / unit
+            let rot = blob.spin + 0.4 * sin(turn + blob.phase)
+            let rx = cos(rot) * dx - sin(rot) * dy, ry = sin(rot) * dx + cos(rot) * dy
+            f += blob.weight * exp(-(rx * rx) / (2 * blob.sizeX * blob.sizeX) - (ry * ry) / (2 * blob.sizeY * blob.sizeY))
+        }
+        return f
+    }
+
+    func draw(frame: Int, total: Int, fps: Int, into ctx: CGContext) {
+        let t = Double(frame) / Double(max(total, 1))
+        var low = [Double](repeating: 0, count: cols * rows)
+        let cell = Double(step)
+        low.withUnsafeMutableBufferPointer { buffer in
+            DispatchQueue.concurrentPerform(iterations: rows) { j in
+                for i in 0..<cols {
+                    buffer[j * cols + i] = field(Double(i - 1) * cell, Double(j - 1) * cell, t)
+                }
+            }
+        }
+
+        let shift = t * drift * ribWidth
+        let rib = ribWidth
+        func optics(_ x: Double) -> (Double, Double, Double, Double) {
+            let position = x + shift
+            let index = floor(position / rib)
+            let s = position / rib - index
+            let lens = s - 0.5
+            let center = (index + 0.5) * rib - shift
+            let c = cos(lens * .pi * 0.95)
+            let glint = exp(-pow((s - 0.12) / 0.06, 2)) * 0.6 + exp(-pow((s - 0.97) / 0.025, 2)) * 0.3
+            return (center - lens * rib * 2.4 + sin(lens * .pi) * rib * 0.5, lens * lens * rib * 0.8, 0.62 + 0.38 * c * c, glint)
+        }
+        var first = [(Double, Double, Double, Double)](repeating: (0, 0, 0, 0), count: width)
+        var second = first
+        var split = [Double](repeating: 1, count: width)
+        for x in 0..<width {
+            let left = Double(x)
+            let a = floor((left + shift) / rib), b = floor((left + 1 + shift) / rib)
+            if a != b {
+                let cut = b * rib - shift - left
+                split[x] = cut
+                first[x] = optics(left + cut / 2)
+                second[x] = optics(left + cut + (1 - cut) / 2)
+            } else {
+                first[x] = optics(left + 0.5)
+            }
+        }
+
+        guard let image = Wallpaper.makeDeepContext(width: width, height: height) else { return }
+        let out = image.data!.assumingMemoryBound(to: UInt16.self)
+        let stride = image.bytesPerRow / 2
+        let w = width, colsCount = cols, rowsCount = rows
+        let toneTable = tone, scale = toneScale, mid = mid, top = top
+        low.withUnsafeBufferPointer { field in
+            func shadeAt(_ o: (Double, Double, Double, Double), _ y: Int) -> (Double, Double, Double) {
+                let fx = min(Double(colsCount - 2), max(0, o.0 / cell + 1))
+                let fy = min(Double(rowsCount - 2), max(0, (Double(y) + o.1) / cell + 1))
+                let i = Int(fx), j = Int(fy), a = fx - Double(i), b = fy - Double(j)
+                let p = field[j * colsCount + i], q = field[j * colsCount + i + 1]
+                let r = field[(j + 1) * colsCount + i], s = field[(j + 1) * colsCount + i + 1]
+                let v = (p + (q - p) * a) * (1 - b) + (r + (s - r) * a) * b
+                let tv = toneTable[min(1023, max(0, Int(v * scale)))]
+                let lit = tv * o.2 * (1 + o.3 * 1.6)
+                let m = min(1, lit * 1.4)
+                let hiT = min(1, max(0, (lit - 0.6) / 0.4))
+                let hi = hiT * hiT * (3 - 2 * hiT)
+                return ((mid.0 + (top.0 - mid.0) * hi) * m, (mid.1 + (top.1 - mid.1) * hi) * m, (mid.2 + (top.2 - mid.2) * hi) * m)
+            }
+            DispatchQueue.concurrentPerform(iterations: height) { y in
+                for x in 0..<w {
+                    var c = shadeAt(first[x], y)
+                    let k = split[x]
+                    if k < 1 {
+                        let d = shadeAt(second[x], y)
+                        c = (c.0 * k + d.0 * (1 - k), c.1 * k + d.1 * (1 - k), c.2 * k + d.2 * (1 - k))
+                    }
+                    let o = y * stride + x * 4
+                    out[o] = UInt16(min(65535, c.0 * 65535))
+                    out[o + 1] = UInt16(min(65535, c.1 * 65535))
+                    out[o + 2] = UInt16(min(65535, c.2 * 65535))
+                    out[o + 3] = 65535
+                }
+            }
+        }
+        if let picture = image.makeImage() {
+            ctx.draw(picture, in: CGRect(x: 0, y: 0, width: width, height: height))
+        }
+    }
+}

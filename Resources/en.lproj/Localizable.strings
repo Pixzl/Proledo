@@ -120,7 +120,9 @@
 "Linien" = "Lines";
 "Milchstraße" = "Milky Way";
 "Berge" = "Mountains";
+"Farbe" = "Color";
 "Länge" = "Length";
+"Kräftig ist deutlich heller und eher für LCD-Monitore gedacht." = "Bold is much brighter and meant more for LCD displays.";
 "%d Videos · nahtlose Schleifen · ≈ %@" = "%d videos · seamless loops · ≈ %@";
 "%d × %d · nahtlose Schleife · ≈ %@" = "%d × %d · seamless loop · ≈ %@";
 "Erzeugen" = "Create";
@@ -141,8 +143,12 @@
 "Glühwürmchen" = "Fireflies";
 "Seide" = "Silk";
 "Sternennebel" = "Nebula";
+"Riffelglas" = "Fluted glass";
 "Locker" = "Loose";
 "Dicht" = "Dense";
 "Ruhig" = "Calm";
 "Lebhaft" = "Lively";
+"Bronze" = "Bronze";
+"Stahlblau" = "Steel blue";
+"Oliv" = "Olive";
 "Fein" = "Fine";

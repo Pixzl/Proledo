@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.19 – November 23, 2026
+
+- New wallpaper style: Fluted glass. Soft light with bright spots glides behind ribbed glass, in bronze, steel blue or olive. Subtle and Normal are gentle on PROLED and OLED displays. Bold is a lot brighter and better for LCDs, the generator tells you so.
+
 ## 0.18.1 – November 19, 2026
 
 - Proledo no longer stops when your Mac is in Low Power Mode. It keeps playing and uses the lighter copy of a video if there is one. If you want it to stop on battery, there's still a switch for that in Settings.

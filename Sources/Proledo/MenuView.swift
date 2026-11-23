@@ -1122,6 +1122,14 @@ private struct GeneratorCard: View {
                         .toggleStyle(.switch)
                         .controlSize(.mini)
                 }
+            case .glass:
+                row(L("Farbe")) {
+                    Picker("", selection: $state.generatorOptions.tint) {
+                        ForEach(TopoOptions.Tint.allCases) { Text(L($0.rawValue)).tag($0) }
+                    }
+                    .pickerStyle(.segmented)
+                    .labelsHidden()
+                }
             case .fireflies, .nebula:
                 EmptyView()
             }
@@ -1133,6 +1141,9 @@ private struct GeneratorCard: View {
                 .labelsHidden()
             }
 
+            if state.generatorOptions.style == .glass && state.generatorOptions.density == .dense {
+                HintText(text: L("Kräftig ist deutlich heller und eher für LCD-Monitore gedacht."), icon: "exclamationmark.triangle")
+            }
             let targets = state.generatorTargets
             if targets.count > 1 {
                 let total = targets.reduce(Int64(0)) { $0 + estimatedBytes(state.generatorSize(for: $1)) }
@@ -1174,6 +1185,7 @@ private struct GeneratorCard: View {
         let factor: Double
         switch state.generatorOptions.style {
         case .stars, .nebula: factor = 1.3
+        case .glass: factor = 1.2
         case .silk: factor = 1.2
         case .aurora: factor = 1.15
         case .contours, .fireflies: factor = 1.0
@@ -1185,8 +1197,8 @@ private struct GeneratorCard: View {
     private func densityLabel(_ density: TopoOptions.Density) -> String {
         switch (state.generatorOptions.style, density) {
         case (.contours, _), (.silk, _): return L(density.rawValue)
-        case (.aurora, .loose), (.nebula, .loose): return L("Zart")
-        case (.aurora, .dense), (.nebula, .dense): return L("Kräftig")
+        case (.aurora, .loose), (.nebula, .loose), (.glass, .loose): return L("Zart")
+        case (.aurora, .dense), (.nebula, .dense), (.glass, .dense): return L("Kräftig")
         case (_, .loose): return L("Wenige")
         case (_, .dense): return L("Viele")
         case (_, .normal): return L("Normal")

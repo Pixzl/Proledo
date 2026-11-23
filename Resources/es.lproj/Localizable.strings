@@ -120,7 +120,9 @@
 "Linien" = "Líneas";
 "Milchstraße" = "Vía Láctea";
 "Berge" = "Montañas";
+"Farbe" = "Color";
 "Länge" = "Duración";
+"Kräftig ist deutlich heller und eher für LCD-Monitore gedacht." = "«Gruesas» es mucho más brillante y está pensado más bien para pantallas LCD.";
 "%d Videos · nahtlose Schleifen · ≈ %@" = "%d vídeos · bucles continuos · ≈ %@";
 "%d × %d · nahtlose Schleife · ≈ %@" = "%d × %d · bucle continuo · ≈ %@";
 "Erzeugen" = "Crear";
@@ -141,8 +143,12 @@
 "Glühwürmchen" = "Luciérnagas";
 "Seide" = "Seda";
 "Sternennebel" = "Nebulosa";
+"Riffelglas" = "Vidrio acanalado";
 "Locker" = "Suelto";
 "Dicht" = "Denso";
 "Ruhig" = "Tranquilo";
 "Lebhaft" = "Animado";
+"Bronze" = "Bronce";
+"Stahlblau" = "Azul acero";
+"Oliv" = "Oliva";
 "Fein" = "Finas";

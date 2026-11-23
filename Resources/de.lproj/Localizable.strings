@@ -120,7 +120,9 @@
 "Linien" = "Linien";
 "Milchstraße" = "Milchstraße";
 "Berge" = "Berge";
+"Farbe" = "Farbe";
 "Länge" = "Länge";
+"Kräftig ist deutlich heller und eher für LCD-Monitore gedacht." = "Kräftig ist deutlich heller und eher für LCD-Monitore gedacht.";
 "%d Videos · nahtlose Schleifen · ≈ %@" = "%d Videos · nahtlose Schleifen · ≈ %@";
 "%d × %d · nahtlose Schleife · ≈ %@" = "%d × %d · nahtlose Schleife · ≈ %@";
 "Erzeugen" = "Erzeugen";
@@ -141,8 +143,12 @@
 "Glühwürmchen" = "Glühwürmchen";
 "Seide" = "Seide";
 "Sternennebel" = "Sternennebel";
+"Riffelglas" = "Riffelglas";
 "Locker" = "Locker";
 "Dicht" = "Dicht";
 "Ruhig" = "Ruhig";
 "Lebhaft" = "Lebhaft";
+"Bronze" = "Bronze";
+"Stahlblau" = "Stahlblau";
+"Oliv" = "Oliv";
 "Fein" = "Fein";
