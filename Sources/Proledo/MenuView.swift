@@ -1182,16 +1182,18 @@ private struct GeneratorCard: View {
     }
 
     private func estimatedBytes(_ size: (width: Int, height: Int)) -> Int64 {
-        let factor: Double
+        let share: Double
         switch state.generatorOptions.style {
-        case .stars, .nebula: factor = 1.3
-        case .glass: factor = 1.2
-        case .silk: factor = 1.2
-        case .aurora: factor = 1.15
-        case .contours, .fireflies: factor = 1.0
+        case .contours: share = 0.95
+        case .stars: share = 0.43
+        case .silk: share = 0.38
+        case .nebula: share = 0.35
+        case .aurora: share = 0.18
+        case .glass: share = 0.14
+        case .fireflies: share = 0.05
         }
-        let bitRate = Double(Wallpaper.bitRate(width: size.width, height: size.height, factor: factor))
-        return Int64(bitRate * Double(state.generatorOptions.seconds) / 8 * 0.95)
+        let bitRate = Double(Wallpaper.bitRate(width: size.width, height: size.height, factor: share))
+        return Int64(bitRate * Double(state.generatorOptions.seconds) / 8)
     }
 
     private func densityLabel(_ density: TopoOptions.Density) -> String {

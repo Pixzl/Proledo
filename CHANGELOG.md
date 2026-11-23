@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.19.2 – November 23, 2026
+
+- The generator now guesses file sizes much closer to what you actually get. It used to say a few hundred MB for videos that end up around 20 to 100 MB.
+
 ## 0.19.1 – November 23, 2026
 
 - Fluted glass now comes out equally bright every time. Before, some videos ended up more than twice as bright as they should, and spots the light kept passing got the most. That's evened out now, which is easier on PROLED and OLED displays.
